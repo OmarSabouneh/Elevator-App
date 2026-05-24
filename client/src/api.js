@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || '/api';
+const API = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 
 function headers() {
   const token = localStorage.getItem('token');
@@ -9,10 +9,18 @@ function headers() {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API}${path}`, {
-    ...options,
-    headers: { ...headers(), ...options.headers },
-  });
+  let res;
+  try {
+    res = await fetch(`${API}${path}`, {
+      ...options,
+      headers: { ...headers(), ...options.headers },
+    });
+  } catch {
+    const hint = import.meta.env.VITE_API_URL
+      ? `API: ${import.meta.env.VITE_API_URL}`
+      : 'VITE_API_URL is not set (Vercel must rebuild after adding it).';
+    throw new Error(`Cannot reach the server. ${hint}`);
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
   return data;

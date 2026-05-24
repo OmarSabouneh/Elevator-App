@@ -1,7 +1,7 @@
 import './loadEnv.js';
 import express from 'express';
-import cors from 'cors';
 import bcrypt from 'bcryptjs';
+import { createCorsMiddleware } from './cors.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -23,7 +23,7 @@ const SUBSCRIPTION_DAYS = Number(process.env.SUBSCRIPTION_DAYS || 30);
 const SUBSCRIPTION_AMOUNT = Number(process.env.SUBSCRIPTION_AMOUNT || 25);
 const SUBSCRIPTION_CURRENCY = process.env.SUBSCRIPTION_CURRENCY || 'USD';
 
-app.use(cors({ origin: process.env.CLIENT_URL || true, credentials: true }));
+app.use(createCorsMiddleware());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

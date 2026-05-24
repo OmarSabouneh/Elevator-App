@@ -69,6 +69,16 @@ Push the repo (never commit `server/.env`).
 
 ---
 
+## Troubleshooting “Failed to fetch” on Vercel
+
+1. **Vercel env** → `VITE_API_URL` = `https://YOUR-API.onrender.com/api` (must include `/api`, no trailing slash).
+2. **Redeploy Vercel** after changing env vars (Vite bakes them in at build time).
+3. **Render env** → `CLIENT_URL` = your exact Vercel URL, e.g. `https://your-app.vercel.app` (no `/` at the end).
+4. Open `https://YOUR-API.onrender.com/api/health` in the browser — must return JSON (wake Render if it slept).
+5. Optional on Render: `ALLOW_VERCEL_PREVIEWS=true` if you use a `*.vercel.app` preview URL different from `CLIENT_URL`.
+
+---
+
 ## 5. Test production
 
 1. Open Vercel URL on your phone.

@@ -23,8 +23,17 @@ export async function initPostgres() {
     ssl: useSsl ? { rejectUnauthorized: false } : undefined,
   });
 
-  await pool.query(SCHEMA_SQL);
-  await pool.query('SELECT 1');
+  try {
+    await pool.query(SCHEMA_SQL);
+    await pool.query('SELECT 1');
+  } catch (err) {
+    if (err.code === '28P01') {
+      throw new Error(
+        'Supabase password rejected. In server/.env fix DATABASE_URL: remove [ ] around the password, use the exact database password from Supabase → Settings → Database.'
+      );
+    }
+    throw err;
+  }
   return 'postgres';
 }
 
