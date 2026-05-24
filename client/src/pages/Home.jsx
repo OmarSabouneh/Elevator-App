@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { formatPhoneLocal } from '../phone';
 
@@ -31,8 +31,7 @@ function readStoredActiveUntil() {
 }
 
 export default function Home({ auth }) {
-  const { user, logout, refresh } = auth;
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, logout } = auth;
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState('');
@@ -40,20 +39,12 @@ export default function Home({ auth }) {
   const [now, setNow] = useState(Date.now());
   const [pulseMs, setPulseMs] = useState(60000);
 
-  const paymentNotice = searchParams.get('payment');
   const remainingMs = activeUntil > now ? activeUntil - now : 0;
   const elevatorActive = remainingMs > 0;
 
   useEffect(() => {
     api.elevatorConfig().then((c) => setPulseMs(c.pulseMs)).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (paymentNotice === 'success') {
-      refresh();
-      setSearchParams({}, { replace: true });
-    }
-  }, [paymentNotice]);
 
   useEffect(() => {
     if (!elevatorActive) return;
@@ -67,19 +58,6 @@ export default function Home({ auth }) {
     }, 1000);
     return () => clearInterval(id);
   }, [elevatorActive, activeUntil]);
-
-  async function handlePay() {
-    setError('');
-    setSuccess('');
-    setBusy('pay');
-    try {
-      const { paymentUrl } = await api.createPayment();
-      window.location.href = paymentUrl;
-    } catch (err) {
-      setError(err.message);
-      setBusy('');
-    }
-  }
 
   async function handleCallElevator() {
     if (elevatorActive) return;
@@ -110,21 +88,19 @@ export default function Home({ auth }) {
     return 'Call Elevator';
   }
 
+  const displayName = user.lastName || formatPhoneLocal(user.phone);
+
   return (
     <>
       <header className="header">
         <div>
-          <h1>Welcome{user.username ? `, @${user.username}` : user.firstName ? `, ${user.firstName}` : ''}</h1>
+          <h1>Welcome, {displayName}</h1>
           <small>{formatPhoneLocal(user.phone)}</small>
         </div>
         <button type="button" className="link" onClick={logout}>
           Log out
         </button>
       </header>
-
-      {paymentNotice === 'success' && (
-        <p className="success-msg card">Payment received — your access is now active.</p>
-      )}
 
       <div className="card">
         <h2>Subscription</h2>
@@ -140,17 +116,11 @@ export default function Home({ auth }) {
             <>
               <span className="badge badge-inactive">No access</span>
               <span style={{ marginLeft: '0.5rem', color: 'var(--muted)' }}>
-                Pay with Whish for 30 days
+                Contact the building admin to activate your account
               </span>
             </>
           )}
         </p>
-
-        {!user.hasAccess && (
-          <button type="button" className="btn-primary" onClick={handlePay} disabled={!!busy}>
-            {busy === 'pay' ? 'Opening Whish…' : 'Pay with Whish Money'}
-          </button>
-        )}
       </div>
 
       <div className="card">

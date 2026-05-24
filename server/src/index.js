@@ -13,15 +13,11 @@ import {
   normalizePhone,
   hasActiveAccess,
 } from './auth.js';
-import { validateUsername } from './username.js';
-import { createWhishPayment } from './whish.js';
 import { enableElevatorAccess, getPulseMs, turnSwitchOn, turnSwitchOff } from './switch.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const SUBSCRIPTION_DAYS = Number(process.env.SUBSCRIPTION_DAYS || 30);
-const SUBSCRIPTION_AMOUNT = Number(process.env.SUBSCRIPTION_AMOUNT || 25);
-const SUBSCRIPTION_CURRENCY = process.env.SUBSCRIPTION_CURRENCY || 'USD';
+const SUBSCRIPTION_DAYS = Number(process.env.SUBSCRIPTION_DAYS || 31);
 
 app.use(createCorsMiddleware());
 app.use(express.json());
@@ -35,7 +31,6 @@ function publicUser(row) {
   return {
     id: row.id,
     phone: row.phone,
-    username: row.username,
     email: row.email,
     firstName: row.first_name,
     lastName: row.last_name,
@@ -63,25 +58,23 @@ async function ensureAdmin() {
   if (!phone || !password) return;
 
   const normalized = normalizePhone(phone);
-  const adminUserCheck = validateUsername(process.env.ADMIN_USERNAME || 'admin');
-  const adminUsername = adminUserCheck.normalized ?? 'admin';
   const hash = bcrypt.hashSync(password, 10);
   const email = `admin@${normalized.replace(/\D/g, '')}.local`;
   const existing = await queryOne('SELECT id FROM users WHERE phone = ?', [normalized]);
 
   if (existing) {
     await execute(
-      `UPDATE users SET password_hash = ?, role = 'admin', email = ?, first_name = 'Building Admin', username = ? WHERE id = ?`,
-      [hash, email, adminUsername, existing.id]
+      `UPDATE users SET password_hash = ?, role = 'admin', email = ?, first_name = 'Building', last_name = 'Admin' WHERE id = ?`,
+      [hash, email, existing.id]
     );
     console.log(`Admin account synced for ${normalized}`);
     return;
   }
 
   await execute(
-    `INSERT INTO users (phone, password_hash, role, email, first_name, username)
-     VALUES (?, ?, 'admin', ?, 'Building Admin', ?)`,
-    [normalized, hash, email, adminUsername]
+    `INSERT INTO users (phone, password_hash, role, email, first_name, last_name)
+     VALUES (?, ?, 'admin', ?, 'Building', 'Admin')`,
+    [normalized, hash, email]
   );
   console.log(`Admin user created for ${normalized}`);
 }
@@ -111,38 +104,26 @@ function parsePhoneInput(phone) {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { phone, password, username, email, firstName, lastName } = req.body;
+    const { phone, password, lastName } = req.body;
     if (!phone || !password || password.length < 6) {
       return res.status(400).json({ error: 'Phone and password (min 6 chars) required' });
+    }
+    if (!lastName?.trim()) {
+      return res.status(400).json({ error: 'Last name is required' });
     }
 
     const parsed = parsePhoneInput(phone);
     if (parsed.error) return res.status(400).json({ error: parsed.error });
     const { normalized } = parsed;
 
-    const usernameParsed = validateUsername(username);
-    if (usernameParsed.error) return res.status(400).json({ error: usernameParsed.error });
-
     const existing = await queryOne('SELECT id FROM users WHERE phone = ?', [normalized]);
     if (existing) return res.status(409).json({ error: 'Phone number already registered' });
 
-    const usernameTaken = await queryOne('SELECT id FROM users WHERE username = ?', [
-      usernameParsed.normalized,
-    ]);
-    if (usernameTaken) return res.status(409).json({ error: 'Username already taken' });
-
     const hash = bcrypt.hashSync(password, 10);
     const result = await execute(
-      `INSERT INTO users (phone, password_hash, username, email, first_name, last_name)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        normalized,
-        hash,
-        usernameParsed.normalized,
-        email || null,
-        firstName || null,
-        lastName || null,
-      ]
+      `INSERT INTO users (phone, password_hash, last_name)
+       VALUES (?, ?, ?)`,
+      [normalized, hash, lastName.trim()]
     );
 
     const user = await getUserById(result.insertId);
@@ -188,103 +169,6 @@ app.get('/api/me', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Payments ---
-
-app.post('/api/payments/create', authMiddleware, async (req, res) => {
-  try {
-    const user = await getUserById(req.user.sub);
-    const orderId = `ELV-${user.id}-${Date.now()}`;
-
-    await execute(
-      `INSERT INTO payments (user_id, order_id, amount, currency, status)
-       VALUES (?, ?, ?, ?, 'pending')`,
-      [user.id, orderId, SUBSCRIPTION_AMOUNT, SUBSCRIPTION_CURRENCY]
-    );
-
-    const { paymentUrl } = await createWhishPayment({
-      orderId,
-      amount: SUBSCRIPTION_AMOUNT,
-      currency: SUBSCRIPTION_CURRENCY,
-      invoice: `Elevator access — ${SUBSCRIPTION_DAYS} days`,
-      phone: user.phone,
-      email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
-    });
-
-    await execute('UPDATE payments SET whish_url = ? WHERE order_id = ?', [paymentUrl, orderId]);
-
-    res.json({
-      orderId,
-      paymentUrl,
-      amount: SUBSCRIPTION_AMOUNT,
-      currency: SUBSCRIPTION_CURRENCY,
-      days: SUBSCRIPTION_DAYS,
-    });
-  } catch (err) {
-    console.error('Payment create error:', err);
-    res.status(500).json({ error: err.message || 'Payment failed' });
-  }
-});
-
-app.post('/api/payments/webhook', async (req, res) => {
-  const secret = req.headers['x-webhook-secret'] || req.body?.secret;
-  if (secret !== process.env.PAYMENT_WEBHOOK_SECRET) {
-    return res.status(401).json({ error: 'Invalid webhook secret' });
-  }
-
-  const orderId = req.body?.order_id || req.body?.orderId;
-  const status = req.body?.status || 'completed';
-  if (!orderId) return res.status(400).json({ error: 'order_id required' });
-
-  await completePayment(orderId, status === 'completed');
-  res.json({ ok: true });
-});
-
-app.get('/api/payments/confirm', async (req, res) => {
-  const { order_id: orderId, status } = req.query;
-  if (!orderId) {
-    return res.redirect(`${process.env.CLIENT_URL}/?payment=error`);
-  }
-  await completePayment(String(orderId), status !== 'failed');
-  res.redirect(`${process.env.CLIENT_URL}/?payment=success&order_id=${orderId}`);
-});
-
-app.post('/api/payments/mock-complete', authMiddleware, async (req, res) => {
-  if (process.env.WHISH_MODE !== 'mock') {
-    return res.status(403).json({ error: 'Only available in WHISH_MODE=mock' });
-  }
-  const { orderId } = req.body;
-  if (!orderId) return res.status(400).json({ error: 'orderId required' });
-
-  const payment = await queryOne('SELECT * FROM payments WHERE order_id = ?', [orderId]);
-  if (!payment || payment.user_id !== req.user.sub) {
-    return res.status(404).json({ error: 'Payment not found' });
-  }
-
-  const expires = await completePayment(orderId, true);
-  res.json({ ok: true, accessExpiresAt: expires });
-});
-
-async function completePayment(orderId, success) {
-  const payment = await queryOne('SELECT * FROM payments WHERE order_id = ?', [orderId]);
-  if (!payment || payment.status === 'completed') {
-    return payment ? (await getUserById(payment.user_id))?.access_expires_at : null;
-  }
-
-  if (!success) {
-    await execute(`UPDATE payments SET status = 'failed' WHERE order_id = ?`, [orderId]);
-    return null;
-  }
-
-  await execute(`UPDATE payments SET status = 'completed', completed_at = ? WHERE order_id = ?`, [
-    new Date().toISOString(),
-    orderId,
-  ]);
-
-  return extendAccess(payment.user_id);
-}
-
 // --- Elevator / switch ---
 
 app.post('/api/elevator/call', authMiddleware, async (req, res) => {
@@ -292,7 +176,7 @@ app.post('/api/elevator/call', authMiddleware, async (req, res) => {
   if (!hasActiveAccess(user)) {
     return res.status(403).json({
       error: 'No active subscription',
-      message: 'Pay via Whish to get 30 days of elevator access',
+      message: 'Ask the building admin to activate your subscription',
     });
   }
 
@@ -340,34 +224,25 @@ app.post('/api/switch/off', authMiddleware, adminMiddleware, async (req, res) =>
 
 app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const rows = await queryAll('SELECT * FROM users ORDER BY created_at DESC');
-    res.json({ users: rows.map(publicUser) });
+    const rows = await queryAll(
+      `SELECT * FROM users WHERE role != 'admin' ORDER BY last_name ASC, phone ASC`
+    );
+    res.json({ users: rows.map(publicUser), subscriptionDays: SUBSCRIPTION_DAYS });
   } catch (err) {
     res.status(500).json({ error: 'Request failed' });
   }
 });
 
-app.patch('/api/admin/users/:id/access', authMiddleware, adminMiddleware, async (req, res) => {
+app.post('/api/admin/users/:id/activate', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { days } = req.body;
-    const d = Number(days) || SUBSCRIPTION_DAYS;
-    const expires = await extendAccess(Number(req.params.id), d);
-    res.json({ accessExpiresAt: expires });
+    const target = await getUserById(Number(req.params.id));
+    if (!target || target.role === 'admin') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const expires = await extendAccess(target.id, SUBSCRIPTION_DAYS);
+    res.json({ ok: true, accessExpiresAt: expires, days: SUBSCRIPTION_DAYS });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/admin/payments', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const payments = await queryAll(
-      `SELECT p.*, u.phone FROM payments p
-       JOIN users u ON u.id = p.user_id
-       ORDER BY p.created_at DESC LIMIT 100`
-    );
-    res.json({ payments });
-  } catch (err) {
-    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -384,7 +259,6 @@ app.get('/api/health', (_req, res) => {
     tuyaConfigured: Boolean(
       process.env.TUYA_ACCESS_ID && process.env.TUYA_ACCESS_SECRET && process.env.TUYA_DEVICE_ID
     ),
-    whishMode: process.env.WHISH_MODE || 'live',
     subscriptionDays: SUBSCRIPTION_DAYS,
   });
 });

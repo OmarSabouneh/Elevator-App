@@ -83,16 +83,8 @@ Push the repo (never commit `server/.env`).
 
 1. Open Vercel URL on your phone.
 2. Register / log in (phone + password).
-3. Admin: grant +30d or mock Whish payment.
+3. Admin → **Activate 31 days** for each resident.
 4. **Call Elevator** → Tuya breaker should run.
-
----
-
-## Whish (when ready)
-
-- Return URL: `https://YOUR-API.onrender.com/api/payments/confirm`
-- Webhook: `https://YOUR-API.onrender.com/api/payments/webhook`
-- Set `WHISH_MODE=live` and real `WHISH_WEBSITE` / `WHISH_SECRET`
 
 ---
 

@@ -192,9 +192,38 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--surface2);
   font-size: 0.9rem;
+}
+
+.user-line-primary {
+  font-weight: 600;
+}
+
+.user-line-secondary {
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.btn-activate {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white;
+}
+
+.btn-activate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .user-row:last-child {

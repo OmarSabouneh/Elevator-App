@@ -4,21 +4,19 @@ import { api } from '../api';
 import { formatPhoneLocal } from '../phone';
 
 export default function Admin() {
-  const [tab, setTab] = useState('users');
   const [users, setUsers] = useState([]);
-  const [payments, setPayments] = useState([]);
+  const [subscriptionDays, setSubscriptionDays] = useState(31);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [activatingId, setActivatingId] = useState(null);
 
   async function load() {
     setError('');
+    setSuccess('');
     try {
-      if (tab === 'users') {
-        const { users: u } = await api.adminUsers();
-        setUsers(u);
-      } else {
-        const { payments: p } = await api.adminPayments();
-        setPayments(p);
-      }
+      const { users: u, subscriptionDays: days } = await api.adminUsers();
+      setUsers(u);
+      if (days) setSubscriptionDays(days);
     } catch (err) {
       setError(err.message);
     }
@@ -26,16 +24,20 @@ export default function Admin() {
 
   useEffect(() => {
     load();
-  }, [tab]);
+  }, []);
 
-  async function grantDays(userId) {
-    const days = prompt('Grant how many days?', '30');
-    if (!days) return;
+  async function activate(userId) {
+    setError('');
+    setSuccess('');
+    setActivatingId(userId);
     try {
-      await api.extendAccess(userId, Number(days));
-      load();
+      const res = await api.activateSubscription(userId);
+      setSuccess(`Access activated for ${subscriptionDays} days.`);
+      await load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setActivatingId(null);
     }
   }
 
@@ -44,60 +46,45 @@ export default function Admin() {
       <header className="header">
         <div>
           <h1>Admin</h1>
-          <small>User database</small>
+          <small>Activate subscriptions manually</small>
         </div>
         <Link to="/" className="link">
           Back
         </Link>
       </header>
 
-      <div className="tabs">
-        <button type="button" className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>
-          Users ({users.length || '…'})
-        </button>
-        <button
-          type="button"
-          className={tab === 'payments' ? 'active' : ''}
-          onClick={() => setTab('payments')}
-        >
-          Payments
-        </button>
-      </div>
-
       <div className="card">
-        {tab === 'users' &&
-          users.map((u) => (
-            <div key={u.id} className="user-row">
-              <div>
-                <div>
-                  {u.username ? `@${u.username}` : formatPhoneLocal(u.phone)}
-                </div>
-                <small style={{ color: 'var(--muted)' }}>
-                  {u.username ? formatPhoneLocal(u.phone) + ' · ' : ''}
-                  {u.hasAccess ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}` : 'No access'}
-                  {u.role === 'admin' ? ' · admin' : ''}
-                </small>
-              </div>
-              <button type="button" className="link" onClick={() => grantDays(u.id)}>
-                +30d
-              </button>
-            </div>
-          ))}
+        {users.length === 0 && (
+          <p style={{ color: 'var(--muted)' }}>No registered users yet.</p>
+        )}
 
-        {tab === 'payments' &&
-          payments.map((p) => (
-            <div key={p.id} className="user-row">
-              <div>
-                <div>{formatPhoneLocal(p.phone)}</div>
-                <small style={{ color: 'var(--muted)' }}>
-                  {p.order_id} · {p.amount} {p.currency} · {p.status}
-                </small>
-              </div>
+        {users.map((u) => (
+          <div key={u.id} className="user-row">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="user-line-primary">{formatPhoneLocal(u.phone)}</div>
+              <div className="user-line-secondary">{u.lastName || '—'}</div>
+              <small style={{ color: 'var(--muted)' }}>
+                {u.hasAccess
+                  ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}`
+                  : 'No active subscription'}
+              </small>
             </div>
-          ))}
+            <button
+              type="button"
+              className="btn-activate"
+              disabled={activatingId === u.id}
+              onClick={() => activate(u.id)}
+            >
+              {activatingId === u.id
+                ? 'Activating…'
+                : `Activate ${subscriptionDays} days`}
+            </button>
+          </div>
+        ))}
       </div>
 
       {error && <p className="error">{error}</p>}
+      {success && <p className="success-msg">{success}</p>}
     </>
   );
 }

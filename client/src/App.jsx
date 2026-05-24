@@ -5,7 +5,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
-import MockPayment from './pages/MockPayment';
 
 function useAuth() {
   const [user, setUser] = useState(null);
@@ -58,7 +57,6 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login auth={auth} />} />
       <Route path="/register" element={<Register auth={auth} />} />
-      <Route path="/payment/mock" element={<MockPayment auth={auth} />} />
       <Route
         path="/"
         element={

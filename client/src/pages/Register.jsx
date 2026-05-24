@@ -5,10 +5,8 @@ import { api } from '../api';
 export default function Register({ auth }) {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
-  const [username, setUsername] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -17,13 +15,7 @@ export default function Register({ auth }) {
     setError('');
     setBusy(true);
     try {
-      const { token, user } = await api.register({
-        phone,
-        username,
-        password,
-        firstName: firstName || undefined,
-        email: email || undefined,
-      });
+      const { token, user } = await api.register({ phone, lastName, password });
       auth.login(token, user);
       navigate('/');
     } catch (err) {
@@ -38,7 +30,7 @@ export default function Register({ auth }) {
       <header className="header">
         <div>
           <h1>Create account</h1>
-          <small>Sign in with mobile number; username is your display name</small>
+          <small>Sign in with your mobile number</small>
         </div>
       </header>
 
@@ -55,35 +47,27 @@ export default function Register({ auth }) {
           required
         />
 
-        <label htmlFor="username">Username</label>
+        <label htmlFor="lastName">Last name</label>
         <input
-          id="username"
+          id="lastName"
           type="text"
-          placeholder="Username"
-          autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          minLength={3}
-          maxLength={30}
-          pattern="[A-Za-z0-9_]+"
+          placeholder="Last name"
+          autoComplete="family-name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           required
         />
 
-        <label htmlFor="password">Password * (min 6 characters)</label>
+        <label htmlFor="password">Password (min 6 characters)</label>
         <input
           id="password"
           type="password"
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           minLength={6}
           required
         />
-
-        <label htmlFor="firstName">First name</label>
-        <input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-
-        <label htmlFor="email">Email (for Whish receipts)</label>
-        <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
 
         {error && <p className="error">{error}</p>}
 

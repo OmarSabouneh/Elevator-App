@@ -1,14 +1,14 @@
 # Elevator Access — Mobile Web App
 
-Mobile-first web app for apartment elevator access: residents sign in with **mobile number + password**, pay via **Whish Money**, get **30 days** of access, and trigger a **WiFi relay** from the app to call the elevator.
+Mobile-first web app for apartment elevator access: residents sign in with **mobile number + password**, get **31 days** of access when the admin activates them, and trigger the building breaker from the app to call the elevator.
 
 ## Features
 
-- User database (SQLite) with phone as username
+- User database with phone login and last name on signup
 - Password login (bcrypt)
-- Whish Money payments (codnloc gateway) — 30-day subscription after payment
+- Admin activates **31-day** subscription per resident (no online payments)
 - **Call Elevator** — keeps the breaker on for 1 minute (configurable)
-- Admin panel — list all users, grant access manually, view payments
+- Admin panel — list users by phone and last name, activate access
 
 ## Quick start (development)
 
@@ -26,7 +26,7 @@ Mobile-first web app for apartment elevator access: residents sign in with **mob
    copy .env.example server\.env
    ```
 
-   For local testing, keep `WHISH_MODE=mock` and `SWITCH_TYPE=mock`.
+   For local testing, keep `SWITCH_TYPE=mock`.
 
 3. **Run**
 
@@ -41,36 +41,9 @@ Mobile-first web app for apartment elevator access: residents sign in with **mob
 
 5. **Test flow**
 
-   - Register with a phone number  
-   - Tap **Pay with Whish Money** → mock payment page → **Simulate successful payment**  
+   - Register with mobile number and last name  
+   - Admin → **Activate 31 days** for that user  
    - Tap **Call Elevator**
-
-## Whish Money (production)
-
-1. Register at [codnloc Whish API](https://pay.codnloc.com/api_documentation.html) and get `website` + `secret`.
-2. Set in `server/.env`:
-
-   ```
-   WHISH_MODE=live
-   WHISH_WEBSITE=your-domain.com
-   WHISH_SECRET=your_secret
-   SUBSCRIPTION_AMOUNT=25
-   SUBSCRIPTION_CURRENCY=USD
-   ```
-
-3. Configure **return URL** in your Whish dashboard:
-
-   ```
-   https://YOUR-API-DOMAIN/api/payments/confirm
-   ```
-
-4. Configure **webhook URL** (recommended):
-
-   ```
-   https://YOUR-API-DOMAIN/api/payments/webhook
-   ```
-
-   Send header `X-Webhook-Secret: <PAYMENT_WEBHOOK_SECRET>` or body `{ "secret": "...", "order_id": "ELV-..." }`.
 
 ## WiFi switch setup
 
@@ -97,9 +70,11 @@ ELEVATOR_PULSE_MS=60000
 
 1. Build the client: `npm run build`
 2. Serve `client/dist` from the API or nginx
-3. Use HTTPS (required for PWA and payments)
-4. Set strong `JWT_SECRET` and `PAYMENT_WEBHOOK_SECRET`
+3. Use HTTPS for production
+4. Set strong `JWT_SECRET`
 5. Point `CLIENT_URL` to your public app URL
+
+See `DEPLOY.md` for Supabase + Render + Vercel.
 
 ## Project structure
 
@@ -113,6 +88,5 @@ elevator-access-app/
 
 ## What you may still need
 
-- **Exact Whish callback format** — confirm field names with codnloc support (+961 3 687 150) and adjust `server/src/index.js` webhook handler if needed.
-- **Switch hardware** — confirm your relay model (Shelly, Sonoff, Tasmota, etc.) so URLs match.
-- **Legal / building approval** — payment amounts, resident list, and elevator wiring should be approved by building management.
+- **Switch hardware** — confirm your Tuya device or relay is wired correctly.
+- **Legal / building approval** — resident list and elevator wiring should be approved by building management.
