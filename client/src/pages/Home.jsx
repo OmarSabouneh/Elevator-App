@@ -114,7 +114,7 @@ export default function Home({ auth }) {
     <>
       <header className="header">
         <div>
-          <h1>Welcome{user.firstName ? `, ${user.firstName}` : ''}</h1>
+          <h1>Welcome{user.username ? `, @${user.username}` : user.firstName ? `, ${user.firstName}` : ''}</h1>
           <small>{formatPhoneLocal(user.phone)}</small>
         </div>
         <button type="button" className="link" onClick={logout}>

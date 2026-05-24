@@ -69,8 +69,11 @@ export default function Admin() {
           users.map((u) => (
             <div key={u.id} className="user-row">
               <div>
-                <div>{formatPhoneLocal(u.phone)}</div>
+                <div>
+                  {u.username ? `@${u.username}` : formatPhoneLocal(u.phone)}
+                </div>
                 <small style={{ color: 'var(--muted)' }}>
+                  {u.username ? formatPhoneLocal(u.phone) + ' · ' : ''}
                   {u.hasAccess ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}` : 'No access'}
                   {u.role === 'admin' ? ' · admin' : ''}
                 </small>

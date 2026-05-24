@@ -5,6 +5,7 @@ import { api } from '../api';
 export default function Register({ auth }) {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ export default function Register({ auth }) {
     try {
       const { token, user } = await api.register({
         phone,
+        username,
         password,
         firstName: firstName || undefined,
         email: email || undefined,
@@ -36,7 +38,7 @@ export default function Register({ auth }) {
       <header className="header">
         <div>
           <h1>Create account</h1>
-          <small>Mobile number is your username</small>
+          <small>Sign in with mobile number; username is your display name</small>
         </div>
       </header>
 
@@ -50,6 +52,20 @@ export default function Register({ auth }) {
           autoComplete="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          required
+        />
+
+        <label htmlFor="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          placeholder="Username"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          minLength={3}
+          maxLength={30}
+          pattern="[A-Za-z0-9_]+"
           required
         />
 
