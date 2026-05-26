@@ -13,7 +13,15 @@ import {
   normalizePhone,
   hasActiveAccess,
 } from './auth.js';
-import { enableElevatorAccess, getPulseMs, turnSwitchOn, turnSwitchOff } from './switch.js';
+import {
+  enableElevatorAccess,
+  getPulseMs,
+  turnSwitchOn,
+  turnSwitchOff,
+  setIndefiniteMode,
+  isIndefiniteMode,
+  getSwitchState,
+} from './switch.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -217,6 +225,31 @@ app.post('/api/switch/off', authMiddleware, adminMiddleware, async (req, res) =>
   try {
     await turnSwitchOff();
     res.json({ ok: true, state: 'off' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/switch/state', authMiddleware, adminMiddleware, (_req, res) => {
+  try {
+    const state = getSwitchState();
+    res.json({ ok: true, state });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/switch/indefinite', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { on } = req.body;
+    const enabled = setIndefiniteMode(Boolean(on));
+    if (enabled) {
+      await turnSwitchOn();
+      res.json({ ok: true, indefinite: true, state: 'on' });
+    } else {
+      await turnSwitchOff();
+      res.json({ ok: true, indefinite: false, state: 'off' });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

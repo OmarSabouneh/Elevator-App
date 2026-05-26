@@ -8,6 +8,9 @@ const PULSE_MS = Number(process.env.ELEVATOR_PULSE_MS || 60000);
 const VERIFY_TIMEOUT_MS = Number(process.env.ELEVATOR_VERIFY_TIMEOUT_MS || 15000);
 
 let offTimer = null;
+let indefiniteMode = false;
+let isOn = false;
+let activeUntil = null;
 
 export function getPulseMs() {
   return PULSE_MS;
@@ -23,11 +26,13 @@ export async function turnSwitchOn() {
   switch (SWITCH_TYPE) {
     case 'mock':
       console.log('[switch] MOCK ON');
+      isOn = true;
       return { ok: true, mode: 'mock' };
     case 'http': {
       const url = process.env.SWITCH_ON_URL;
       if (!url) throw new Error('SWITCH_ON_URL not configured');
       await fetchSwitch(url);
+      isOn = true;
       return { ok: true, mode: 'http' };
     }
     case 'shelly': {
@@ -35,11 +40,13 @@ export async function turnSwitchOn() {
       const relayId = process.env.SHELLY_RELAY_ID || '0';
       if (!host) throw new Error('SHELLY_HOST not configured');
       await fetchSwitch(`${host.replace(/\/$/, '')}/relay/${relayId}?turn=on`);
+      isOn = true;
       return { ok: true, mode: 'shelly' };
     }
     case 'tuya': {
       const { setTuyaBreaker } = await import('./tuya.js');
       await setTuyaBreaker(true);
+      isOn = true;
       return { ok: true, mode: 'tuya' };
     }
     default:
@@ -51,11 +58,13 @@ export async function turnSwitchOff() {
   switch (SWITCH_TYPE) {
     case 'mock':
       console.log('[switch] MOCK OFF');
+      isOn = false;
       return { ok: true, mode: 'mock' };
     case 'http': {
       const url = process.env.SWITCH_OFF_URL;
       if (!url) throw new Error('SWITCH_OFF_URL not configured');
       await fetchSwitch(url);
+      isOn = false;
       return { ok: true, mode: 'http' };
     }
     case 'shelly': {
@@ -63,11 +72,14 @@ export async function turnSwitchOff() {
       const relayId = process.env.SHELLY_RELAY_ID || '0';
       if (!host) throw new Error('SHELLY_HOST not configured');
       await fetchSwitch(`${host.replace(/\/$/, '')}/relay/${relayId}?turn=off`);
+      isOn = false;
       return { ok: true, mode: 'shelly' };
     }
     case 'tuya': {
       const { setTuyaBreaker } = await import('./tuya.js');
       await setTuyaBreaker(false);
+      isOn = false;
+      activeUntil = null;
       return { ok: true, mode: 'tuya' };
     }
     default:
@@ -89,10 +101,16 @@ async function verifyBreakerIsOn() {
 }
 
 function scheduleTurnOff(delayMs) {
+  if (indefiniteMode) {
+    // Admin requested indefinite on — do not schedule auto-off.
+    return;
+  }
   if (offTimer) clearTimeout(offTimer);
   offTimer = setTimeout(async () => {
     offTimer = null;
     try {
+      // clear activeUntil before calling turn off
+      activeUntil = null;
       await turnSwitchOff();
     } catch (err) {
       console.error('[switch] auto off failed:', err.message);
@@ -118,8 +136,14 @@ export async function enableElevatorAccess() {
   }
 
   const pulseMs = PULSE_MS;
-  const activeUntil = Date.now() + pulseMs;
-  scheduleTurnOff(pulseMs);
+  // if indefinite mode is active, do not schedule an auto-off
+  if (!indefiniteMode) {
+    activeUntil = Date.now() + pulseMs;
+    scheduleTurnOff(pulseMs);
+  } else {
+    // when indefinite, mark activeUntil as null
+    activeUntil = null;
+  }
 
   return { pulseMs, activeUntil, verified: true };
 }
@@ -129,4 +153,25 @@ export async function pulseElevatorAccess() {
   const result = await enableElevatorAccess();
   await new Promise((r) => setTimeout(r, result.pulseMs));
   return { pulseMs: result.pulseMs };
+}
+
+export function setIndefiniteMode(on) {
+  indefiniteMode = Boolean(on);
+  if (indefiniteMode) {
+    // cancel any scheduled auto-off
+    if (offTimer) {
+      clearTimeout(offTimer);
+      offTimer = null;
+    }
+    activeUntil = null;
+  }
+  return indefiniteMode;
+}
+
+export function isIndefiniteMode() {
+  return indefiniteMode;
+}
+
+export function getSwitchState() {
+  return { isOn, indefinite: indefiniteMode, activeUntil };
 }

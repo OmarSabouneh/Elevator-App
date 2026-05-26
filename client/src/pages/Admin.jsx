@@ -9,6 +9,8 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activatingId, setActivatingId] = useState(null);
+  const [switchState, setSwitchState] = useState({ isOn: false, indefinite: false });
+  const [togglingSwitch, setTogglingSwitch] = useState(false);
 
   async function load() {
     setError('');
@@ -24,7 +26,17 @@ export default function Admin() {
 
   useEffect(() => {
     load();
+    loadSwitch();
   }, []);
+
+  async function loadSwitch() {
+    try {
+      const res = await api.switchState();
+      if (res && res.state) setSwitchState(res.state);
+    } catch (err) {
+      // ignore failures
+    }
+  }
 
   async function activate(userId) {
     setError('');
@@ -41,6 +53,21 @@ export default function Admin() {
     }
   }
 
+  async function toggleIndefinite() {
+    setTogglingSwitch(true);
+    try {
+      const turnOn = !switchState.indefinite;
+      const res = await api.setIndefiniteSwitch(turnOn);
+      if (res && res.indefinite !== undefined) {
+        setSwitchState({ ...switchState, indefinite: res.indefinite, isOn: res.state === 'on' });
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setTogglingSwitch(false);
+    }
+  }
+
   return (
     <>
       <header className="header">
@@ -54,6 +81,20 @@ export default function Admin() {
       </header>
 
       <div className="card">
+        <div style={{ marginBottom: 12 }}>
+          <button
+            type="button"
+            className="btn-activate"
+            onClick={toggleIndefinite}
+            disabled={togglingSwitch}
+          >
+            {togglingSwitch
+              ? 'Updating…'
+              : switchState.indefinite
+              ? 'Turn breaker off'
+              : 'Turn breaker on indefinitely'}
+          </button>
+        </div>
         {users.length === 0 && (
           <p style={{ color: 'var(--muted)' }}>No registered users yet.</p>
         )}

@@ -35,4 +35,6 @@ export const api = {
   adminUsers: () => request('/admin/users'),
   activateSubscription: (id) =>
     request(`/admin/users/${id}/activate`, { method: 'POST' }),
+  switchState: () => request('/switch/state'),
+  setIndefiniteSwitch: (on) => request('/switch/indefinite', { method: 'POST', body: JSON.stringify({ on }) }),
 };
