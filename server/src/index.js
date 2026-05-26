@@ -332,6 +332,8 @@ app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, 
     if (!target || target.role === 'admin') {
       return res.status(404).json({ error: 'User not found' });
     }
+    await execute('DELETE FROM access_logs WHERE user_id = ?', [target.id]);
+    await execute('DELETE FROM payments WHERE user_id = ?', [target.id]);
     await execute('DELETE FROM users WHERE id = ?', [target.id]);
     res.json({ ok: true });
   } catch (err) {
