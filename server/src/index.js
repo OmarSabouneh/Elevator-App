@@ -71,18 +71,20 @@ async function ensureAdmin() {
   const existing = await queryOne('SELECT id FROM users WHERE phone = ?', [normalized]);
 
   if (existing) {
+    const forever = new Date('9999-12-31T23:59:59Z').toISOString();
     await execute(
-      `UPDATE users SET password_hash = ?, role = 'admin', email = ?, first_name = 'Building', last_name = 'Admin' WHERE id = ?`,
-      [hash, email, existing.id]
+      `UPDATE users SET password_hash = ?, role = 'admin', email = ?, first_name = 'Building', last_name = 'Admin', access_expires_at = ? WHERE id = ?`,
+      [hash, email, forever, existing.id]
     );
     console.log(`Admin account synced for ${normalized}`);
     return;
   }
 
+  const forever = new Date('9999-12-31T23:59:59Z').toISOString();
   await execute(
-    `INSERT INTO users (phone, password_hash, role, email, first_name, last_name)
-     VALUES (?, ?, 'admin', ?, 'Building', 'Admin')`,
-    [normalized, hash, email]
+    `INSERT INTO users (phone, password_hash, role, email, first_name, last_name, access_expires_at)
+     VALUES (?, ?, 'admin', ?, 'Building', 'Admin', ?)`,
+    [normalized, hash, email, forever]
   );
   console.log(`Admin user created for ${normalized}`);
 }
@@ -274,6 +276,64 @@ app.post('/api/admin/users/:id/activate', authMiddleware, adminMiddleware, async
     }
     const expires = await extendAccess(target.id, SUBSCRIPTION_DAYS);
     res.json({ ok: true, accessExpiresAt: expires, days: SUBSCRIPTION_DAYS });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/users/:id/permanent', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const target = await getUserById(Number(req.params.id));
+    if (!target || target.role === 'admin') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const forever = new Date('9999-12-31T23:59:59Z').toISOString();
+    await execute('UPDATE users SET access_expires_at = ? WHERE id = ?', [forever, target.id]);
+    res.json({ ok: true, accessExpiresAt: forever, permanent: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Make the admin's own subscription permanent
+app.post('/api/admin/me/permanent', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const me = await getUserById(req.user.sub);
+    if (!me || me.role !== 'admin') return res.status(404).json({ error: 'Admin not found' });
+    const forever = new Date('9999-12-31T23:59:59Z').toISOString();
+    await execute('UPDATE users SET access_expires_at = ? WHERE id = ?', [forever, me.id]);
+    res.json({ ok: true, accessExpiresAt: forever, permanent: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/users/:id/password', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const target = await getUserById(Number(req.params.id));
+    if (!target || target.role === 'admin') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    const hash = bcrypt.hashSync(password, 10);
+    await execute('UPDATE users SET password_hash = ? WHERE id = ?', [hash, target.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const target = await getUserById(Number(req.params.id));
+    if (!target || target.role === 'admin') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    await execute('DELETE FROM users WHERE id = ?', [target.id]);
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

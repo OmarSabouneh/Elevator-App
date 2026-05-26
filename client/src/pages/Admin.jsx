@@ -11,6 +11,7 @@ export default function Admin() {
   const [activatingId, setActivatingId] = useState(null);
   const [switchState, setSwitchState] = useState({ isOn: false, indefinite: false });
   const [togglingSwitch, setTogglingSwitch] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
 
   async function load() {
     setError('');
@@ -28,6 +29,17 @@ export default function Admin() {
     load();
     loadSwitch();
   }, []);
+
+  async function makeMyPermanent() {
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.setMyPermanent();
+      if (res && res.accessExpiresAt) setSuccess('Your subscription is now permanent.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   async function loadSwitch() {
     try {
@@ -50,6 +62,58 @@ export default function Admin() {
       setError(err.message);
     } finally {
       setActivatingId(null);
+    }
+  }
+
+  async function makePermanent(userId) {
+    setError('');
+    setSuccess('');
+    setProcessingId(userId);
+    try {
+      const res = await api.setUserPermanent(userId);
+      if (res && res.accessExpiresAt) setSuccess('Subscription set to permanent.');
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  async function changePassword(userId) {
+    setError('');
+    setSuccess('');
+    const pw = window.prompt('Enter new password for this user (min 6 chars)');
+    if (!pw) return;
+    if (pw.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    setProcessingId(userId);
+    try {
+      await api.setUserPassword(userId, pw);
+      setSuccess('Password updated.');
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  async function removeUser(userId) {
+    setError('');
+    setSuccess('');
+    if (!window.confirm('Delete this user? This cannot be undone.')) return;
+    setProcessingId(userId);
+    try {
+      await api.deleteUser(userId);
+      setSuccess('User deleted.');
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessingId(null);
     }
   }
 
@@ -95,13 +159,18 @@ export default function Admin() {
               : 'Turn breaker on indefinitely'}
           </button>
         </div>
+        <div style={{ marginBottom: 12 }}>
+          <button type="button" className="btn-ghost" onClick={makeMyPermanent}>
+            Make my subscription permanent
+          </button>
+        </div>
         {users.length === 0 && (
           <p style={{ color: 'var(--muted)' }}>No registered users yet.</p>
         )}
 
         {users.map((u) => (
-          <div key={u.id} className="user-row">
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div key={u.id} className="user-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div style={{ width: '100%', marginBottom: 8 }}>
               <div className="user-line-primary">{formatPhoneLocal(u.phone)}</div>
               <div className="user-line-secondary">{u.lastName || '—'}</div>
               <small style={{ color: 'var(--muted)' }}>
@@ -110,16 +179,37 @@ export default function Admin() {
                   : 'No active subscription'}
               </small>
             </div>
-            <button
-              type="button"
-              className="btn-activate"
-              disabled={activatingId === u.id}
-              onClick={() => activate(u.id)}
-            >
-              {activatingId === u.id
-                ? 'Activating…'
-                : `Activate ${subscriptionDays} days`}
-            </button>
+            <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+              <button
+                type="button"
+                className="btn-ghost"
+                disabled={processingId === u.id}
+                onClick={() => changePassword(u.id)}
+              >
+                Change password
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ background: 'transparent', color: 'var(--danger)' }}
+                disabled={processingId === u.id}
+                onClick={() => removeUser(u.id)}
+              >
+                Delete
+              </button>
+              <div style={{ marginLeft: 'auto' }}>
+                <button
+                  type="button"
+                  className="btn-activate"
+                  disabled={activatingId === u.id}
+                  onClick={() => activate(u.id)}
+                >
+                  {activatingId === u.id
+                    ? 'Activating…'
+                    : `Activate ${subscriptionDays} days`}
+                </button>
+              </div>
+            </div>
           </div>
         ))}
       </div>

@@ -37,4 +37,8 @@ export const api = {
     request(`/admin/users/${id}/activate`, { method: 'POST' }),
   switchState: () => request('/switch/state'),
   setIndefiniteSwitch: (on) => request('/switch/indefinite', { method: 'POST', body: JSON.stringify({ on }) }),
+  setUserPermanent: (id) => request(`/admin/users/${id}/permanent`, { method: 'POST' }),
+  setUserPassword: (id, password) => request(`/admin/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
+  deleteUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+  setMyPermanent: () => request('/admin/me/permanent', { method: 'POST' }),
 };
