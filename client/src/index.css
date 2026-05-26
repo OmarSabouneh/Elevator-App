@@ -196,6 +196,7 @@ button:disabled {
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--surface2);
   font-size: 0.9rem;
+  flex-wrap: wrap;
 }
 
 .user-row-info {
@@ -208,15 +209,21 @@ button:disabled {
   flex-shrink: 0;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.btn-danger {
+.btn-ghost-danger {
   background: transparent;
   color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.35);
 }
 
 .user-line-primary {
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-line-secondary {
@@ -224,12 +231,21 @@ button:disabled {
   margin-top: 0.15rem;
 }
 
+.user-row-actions button {
+  height: 34px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  min-width: 124px;
+  text-align: center;
+  line-height: 1;
+}
+
 .btn-activate {
   width: auto;
   flex-shrink: 0;
   margin-top: 0;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.8rem;
   border: none;
   border-radius: 10px;
   font-weight: 600;
@@ -245,6 +261,13 @@ button:disabled {
 
 .user-row:last-child {
   border-bottom: none;
+}
+
+@media (max-width: 520px) {
+  .user-row-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .tabs {

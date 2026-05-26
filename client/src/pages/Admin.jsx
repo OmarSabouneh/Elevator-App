@@ -175,7 +175,7 @@ export default function Admin() {
               </button>
               <button
                 type="button"
-                className="btn-ghost btn-danger"
+                className="btn-ghost btn-ghost-danger"
                 disabled={processingId === u.id}
                 onClick={() => removeUser(u.id)}
               >
