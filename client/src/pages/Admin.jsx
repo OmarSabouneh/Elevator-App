@@ -156,13 +156,15 @@ export default function Admin() {
         {users.map((u) => (
           <div key={u.id} className="user-row">
             <div className="user-row-info">
-              <div className="user-line-primary">{formatPhoneLocal(u.phone)}</div>
-              <div className="user-line-secondary">{u.lastName || '—'}</div>
-              <small style={{ color: 'var(--muted)' }}>
-                {u.hasAccess
-                  ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}`
-                  : 'No active subscription'}
-              </small>
+              <div className="user-row-text-line">
+                <div className="user-line-primary">{formatPhoneLocal(u.phone)}</div>
+                <div className="user-line-secondary">{u.lastName || '—'}</div>
+                <div className="user-row-access">
+                  {u.hasAccess
+                    ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}`
+                    : 'No active subscription'}
+                </div>
+              </div>
             </div>
             <div className="user-row-actions">
               <button
@@ -175,7 +177,7 @@ export default function Admin() {
               </button>
               <button
                 type="button"
-                className="btn-ghost btn-ghost-danger"
+                className="btn-ghost"
                 disabled={processingId === u.id}
                 onClick={() => removeUser(u.id)}
               >
@@ -183,7 +185,7 @@ export default function Admin() {
               </button>
               <button
                 type="button"
-                className="btn-activate"
+                className="btn-ghost"
                 disabled={activatingId === u.id}
                 onClick={() => activate(u.id)}
               >
