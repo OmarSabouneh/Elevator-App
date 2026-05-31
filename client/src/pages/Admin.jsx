@@ -29,6 +29,7 @@ export default function Admin() {
   const [newLastName, setNewLastName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
 
   const [modal, setModal] = useState(null);
 
@@ -295,7 +296,26 @@ export default function Admin() {
           <p style={{ color: 'var(--muted)' }}>No registered users yet.</p>
         )}
 
-        {users.map((u) => (
+        {users.length > 0 && (
+          <input
+            type="text"
+            placeholder="Search by name or phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ marginBottom: 8 }}
+          />
+        )}
+
+        {users.filter((u) => {
+          if (!search.trim()) return true;
+          const q = search.toLowerCase().trim();
+          return (
+            (u.lastName && u.lastName.toLowerCase().includes(q)) ||
+            (u.firstName && u.firstName.toLowerCase().includes(q)) ||
+            u.phone.toLowerCase().includes(q) ||
+            formatPhoneLocal(u.phone).toLowerCase().includes(q)
+          );
+        }).map((u) => (
           <div key={u.id} className="user-row">
             <div className="user-row-info">
               <div className="user-row-text-line">
