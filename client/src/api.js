@@ -27,7 +27,6 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  register: (body) => request('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/me'),
   elevatorConfig: () => request('/elevator/config'),
@@ -40,5 +39,6 @@ export const api = {
   setUserPermanent: (id) => request(`/admin/users/${id}/permanent`, { method: 'POST' }),
   setUserPassword: (id, password) => request(`/admin/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
   deleteUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+  createUser: (body) => request('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
   setMyPermanent: () => request('/admin/me/permanent', { method: 'POST' }),
 };

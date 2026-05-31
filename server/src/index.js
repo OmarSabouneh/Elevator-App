@@ -112,39 +112,6 @@ function parsePhoneInput(phone) {
 
 // --- Auth ---
 
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { phone, password, lastName } = req.body;
-    if (!phone || !password || password.length < 6) {
-      return res.status(400).json({ error: 'Phone and password (min 6 chars) required' });
-    }
-    if (!lastName?.trim()) {
-      return res.status(400).json({ error: 'Last name is required' });
-    }
-
-    const parsed = parsePhoneInput(phone);
-    if (parsed.error) return res.status(400).json({ error: parsed.error });
-    const { normalized } = parsed;
-
-    const existing = await queryOne('SELECT id FROM users WHERE phone = ?', [normalized]);
-    if (existing) return res.status(409).json({ error: 'Phone number already registered' });
-
-    const hash = bcrypt.hashSync(password, 10);
-    const result = await execute(
-      `INSERT INTO users (phone, password_hash, last_name)
-       VALUES (?, ?, ?)`,
-      [normalized, hash, lastName.trim()]
-    );
-
-    const user = await getUserById(result.insertId);
-    const token = signToken(user);
-    res.status(201).json({ token, user: publicUser(user) });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
-  }
-});
-
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -265,6 +232,38 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
     res.json({ users: rows.map(publicUser), subscriptionDays: SUBSCRIPTION_DAYS });
   } catch (err) {
     res.status(500).json({ error: 'Request failed' });
+  }
+});
+
+app.post('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { phone, password, lastName } = req.body;
+    if (!phone || !password || password.length < 6) {
+      return res.status(400).json({ error: 'Phone and password (min 6 chars) required' });
+    }
+    if (!lastName?.trim()) {
+      return res.status(400).json({ error: 'Last name is required' });
+    }
+
+    const parsed = parsePhoneInput(phone);
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
+    const { normalized } = parsed;
+
+    const existing = await queryOne('SELECT id FROM users WHERE phone = ?', [normalized]);
+    if (existing) return res.status(409).json({ error: 'Phone number already registered' });
+
+    const hash = bcrypt.hashSync(password, 10);
+    const result = await execute(
+      `INSERT INTO users (phone, password_hash, last_name)
+       VALUES (?, ?, ?)`,
+      [normalized, hash, lastName.trim()]
+    );
+
+    const user = await getUserById(result.insertId);
+    res.status(201).json({ ok: true, user: publicUser(user) });
+  } catch (err) {
+    console.error('Create user error:', err);
+    res.status(500).json({ error: 'Failed to create user' });
   }
 });
 

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { api } from './api';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 
@@ -56,7 +55,6 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login auth={auth} />} />
-      <Route path="/register" element={<Register auth={auth} />} />
       <Route
         path="/"
         element={

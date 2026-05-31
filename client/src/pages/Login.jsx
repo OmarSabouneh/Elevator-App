@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 
 export default function Login({ auth }) {
@@ -61,13 +61,6 @@ export default function Login({ auth }) {
         <button type="submit" className="btn-primary" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-
-        <p style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>
-          New resident?{' '}
-          <Link to="/register" className="link">
-            Register
-          </Link>
-        </p>
       </form>
     </>
   );

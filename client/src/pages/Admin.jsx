@@ -12,6 +12,11 @@ export default function Admin() {
   const [switchState, setSwitchState] = useState({ isOn: false, indefinite: false });
   const [togglingSwitch, setTogglingSwitch] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newPhone, setNewPhone] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setError('');
@@ -117,6 +122,30 @@ export default function Admin() {
     }
   }
 
+  async function createUser(e) {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    if (!newPhone || !newLastName.trim() || !newPassword || newPassword.length < 6) {
+      setError('Phone, last name, and password (min 6 chars) are required');
+      return;
+    }
+    setCreating(true);
+    try {
+      await api.createUser({ phone: newPhone, lastName: newLastName, password: newPassword });
+      setSuccess('User created successfully.');
+      setNewPhone('');
+      setNewLastName('');
+      setNewPassword('');
+      setShowCreateForm(false);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCreating(false);
+    }
+  }
+
   async function toggleIndefinite() {
     setTogglingSwitch(true);
     try {
@@ -164,6 +193,53 @@ export default function Admin() {
             Make my subscription permanent
           </button>
         </div>
+        <div style={{ marginBottom: 12 }}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setShowCreateForm(!showCreateForm)}
+          >
+            {showCreateForm ? 'Cancel' : 'Create new user'}
+          </button>
+        </div>
+        {showCreateForm && (
+          <form className="card" onSubmit={createUser} style={{ marginBottom: 16 }}>
+            <label htmlFor="newPhone">Mobile number</label>
+            <input
+              id="newPhone"
+              type="tel"
+              placeholder="Mobile number"
+              inputMode="tel"
+              autoComplete="tel"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              required
+            />
+            <label htmlFor="newLastName">Last name</label>
+            <input
+              id="newLastName"
+              type="text"
+              placeholder="Last name"
+              autoComplete="family-name"
+              value={newLastName}
+              onChange={(e) => setNewLastName(e.target.value)}
+              required
+            />
+            <label htmlFor="newPassword">Password (min 6 characters)</label>
+            <input
+              id="newPassword"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+            <button type="submit" className="btn-primary" disabled={creating}>
+              {creating ? 'Creating…' : 'Create user'}
+            </button>
+          </form>
+        )}
         {users.length === 0 && (
           <p style={{ color: 'var(--muted)' }}>No registered users yet.</p>
         )}
