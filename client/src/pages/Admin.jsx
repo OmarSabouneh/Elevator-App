@@ -35,17 +35,6 @@ export default function Admin() {
     loadSwitch();
   }, []);
 
-  async function makeMyPermanent() {
-    setError('');
-    setSuccess('');
-    try {
-      const res = await api.setMyPermanent();
-      if (res && res.accessExpiresAt) setSuccess('Your subscription is now permanent.');
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
   async function loadSwitch() {
     try {
       const res = await api.switchState();
@@ -58,6 +47,7 @@ export default function Admin() {
   async function activate(userId) {
     setError('');
     setSuccess('');
+    if (!window.confirm(`Activate ${subscriptionDays} days of access for this user?`)) return;
     setActivatingId(userId);
     try {
       const res = await api.activateSubscription(userId);
@@ -188,6 +178,7 @@ export default function Admin() {
               : 'Turn breaker on indefinitely'}
           </button>
         </div>
+<<<<<<< HEAD
         <div style={{ marginBottom: 12 }}>
           <button type="button" className="btn-ghost" onClick={makeMyPermanent}>
             Make my subscription permanent
@@ -240,22 +231,26 @@ export default function Admin() {
             </button>
           </form>
         )}
+=======
+>>>>>>> 9e1a5812154717c715dc8522f5b3797d88ed73bf
         {users.length === 0 && (
           <p style={{ color: 'var(--muted)' }}>No registered users yet.</p>
         )}
 
         {users.map((u) => (
-          <div key={u.id} className="user-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-            <div style={{ width: '100%', marginBottom: 8 }}>
-              <div className="user-line-primary">{formatPhoneLocal(u.phone)}</div>
-              <div className="user-line-secondary">{u.lastName || '—'}</div>
-              <small style={{ color: 'var(--muted)' }}>
-                {u.hasAccess
-                  ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}`
-                  : 'No active subscription'}
-              </small>
+          <div key={u.id} className="user-row">
+            <div className="user-row-info">
+              <div className="user-row-text-line">
+                <div className="user-line-primary">{formatPhoneLocal(u.phone)}</div>
+                <div className="user-line-secondary">{u.lastName || '—'}</div>
+                <div className="user-row-access">
+                  {u.hasAccess
+                    ? `Active until ${new Date(u.accessExpiresAt).toLocaleDateString()}`
+                    : 'No active subscription'}
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+            <div className="user-row-actions">
               <button
                 type="button"
                 className="btn-ghost"
@@ -267,24 +262,21 @@ export default function Admin() {
               <button
                 type="button"
                 className="btn-ghost"
-                style={{ background: 'transparent', color: 'var(--danger)' }}
                 disabled={processingId === u.id}
                 onClick={() => removeUser(u.id)}
               >
                 Delete
               </button>
-              <div style={{ marginLeft: 'auto' }}>
-                <button
-                  type="button"
-                  className="btn-activate"
-                  disabled={activatingId === u.id}
-                  onClick={() => activate(u.id)}
-                >
-                  {activatingId === u.id
-                    ? 'Activating…'
-                    : `Activate ${subscriptionDays} days`}
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn-ghost"
+                disabled={activatingId === u.id}
+                onClick={() => activate(u.id)}
+              >
+                {activatingId === u.id
+                  ? 'Activating…'
+                  : `Activate ${subscriptionDays} days`}
+              </button>
             </div>
           </div>
         ))}
