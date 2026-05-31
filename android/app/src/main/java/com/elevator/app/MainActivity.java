@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setSupportMultipleWindows(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
@@ -109,6 +109,7 @@ public class MainActivity extends Activity {
 
     private void loadSite() {
         if (isOnline()) {
+            webView.clearCache(true);
             webView.loadUrl(SITE_URL);
             webView.setVisibility(View.VISIBLE);
             offlineOverlay.setVisibility(View.GONE);
