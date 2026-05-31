@@ -315,7 +315,7 @@ export default function Admin() {
                 disabled={processingId === u.id}
                 onClick={() => changePassword(u.id)}
               >
-                Change password
+                Password
               </button>
               <button
                 type="button"
@@ -333,7 +333,7 @@ export default function Admin() {
               >
                 {activatingId === u.id
                   ? 'Activating…'
-                  : `Activate ${subscriptionDays} days`}
+                  : 'Activate'}
               </button>
               <button
                 type="button"
@@ -341,7 +341,7 @@ export default function Admin() {
                 disabled={processingId === u.id}
                 onClick={() => editSubscription(u.id)}
               >
-                Edit subscription
+                Edit
               </button>
             </div>
           </div>
