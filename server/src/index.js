@@ -340,6 +340,36 @@ app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, 
   }
 });
 
+app.post('/api/admin/users/:id/subscription', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const target = await getUserById(Number(req.params.id));
+    if (!target || target.role === 'admin') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const { days } = req.body;
+    if (days === undefined || days === null || isNaN(days)) {
+      return res.status(400).json({ error: 'Days is required' });
+    }
+    const numDays = Number(days);
+    if (numDays < 0 || !Number.isInteger(numDays)) {
+      return res.status(400).json({ error: 'Days must be a non-negative integer' });
+    }
+
+    if (numDays === 0) {
+      await execute('UPDATE users SET access_expires_at = NULL WHERE id = ?', [target.id]);
+      res.json({ ok: true, accessExpiresAt: null, days: 0 });
+    } else {
+      const base = new Date();
+      base.setDate(base.getDate() + numDays);
+      const expires = base.toISOString();
+      await execute('UPDATE users SET access_expires_at = ? WHERE id = ?', [expires, target.id]);
+      res.json({ ok: true, accessExpiresAt: expires, days: numDays });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/elevator/config', (_req, res) => {
   res.json({ pulseMs: getPulseMs() });
 });

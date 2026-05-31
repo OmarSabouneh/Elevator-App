@@ -39,5 +39,6 @@ export const api = {
   setUserPermanent: (id) => request(`/admin/users/${id}/permanent`, { method: 'POST' }),
   setUserPassword: (id, password) => request(`/admin/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
   deleteUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+  editSubscription: (id, days) => request(`/admin/users/${id}/subscription`, { method: 'POST', body: JSON.stringify({ days }) }),
   createUser: (body) => request('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
   };

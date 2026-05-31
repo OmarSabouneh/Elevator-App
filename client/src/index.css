@@ -313,3 +313,75 @@ button:disabled {
   color: var(--bg);
   border-color: var(--accent);
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 380px;
+  animation: modal-in 0.15s ease-out;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.modal-message {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--surface2);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-input:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.modal-actions button {
+  flex: 1;
+  margin-top: 0;
+}
