@@ -55,6 +55,7 @@ export async function turnSwitchOn() {
 }
 
 export async function turnSwitchOff() {
+  activeUntil = null;
   switch (SWITCH_TYPE) {
     case 'mock':
       console.log('[switch] MOCK OFF');
@@ -79,7 +80,6 @@ export async function turnSwitchOff() {
       const { setTuyaBreaker } = await import('./tuya.js');
       await setTuyaBreaker(false);
       isOn = false;
-      activeUntil = null;
       return { ok: true, mode: 'tuya' };
     }
     default:
@@ -136,16 +136,14 @@ export async function enableElevatorAccess() {
   }
 
   const pulseMs = PULSE_MS;
-  // if indefinite mode is active, do not schedule an auto-off
   if (!indefiniteMode) {
     activeUntil = Date.now() + pulseMs;
     scheduleTurnOff(pulseMs);
   } else {
-    // when indefinite, mark activeUntil as null
     activeUntil = null;
   }
 
-  return { pulseMs, activeUntil, verified: true };
+  return { pulseMs, activeUntil, indefinite: indefiniteMode, verified: true };
 }
 
 /** @deprecated Use enableElevatorAccess — blocks for full pulse duration */
@@ -158,11 +156,12 @@ export async function pulseElevatorAccess() {
 export function setIndefiniteMode(on) {
   indefiniteMode = Boolean(on);
   if (indefiniteMode) {
-    // cancel any scheduled auto-off
     if (offTimer) {
       clearTimeout(offTimer);
       offTimer = null;
     }
+    activeUntil = null;
+  } else {
     activeUntil = null;
   }
   return indefiniteMode;

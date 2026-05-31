@@ -163,6 +163,7 @@ app.post('/api/elevator/call', authMiddleware, async (req, res) => {
       user.id,
       'elevator_call',
     ]);
+    const indefinite = result.indefinite;
     const minutes = Math.round(result.pulseMs / 60000);
     const durationLabel =
       result.pulseMs % 60000 === 0 && minutes > 0
@@ -171,9 +172,12 @@ app.post('/api/elevator/call', authMiddleware, async (req, res) => {
     res.json({
       ok: true,
       verified: result.verified,
-      message: `Breaker is on for ${durationLabel}.`,
+      message: indefinite
+        ? 'Breaker is on indefinitely.'
+        : `Breaker is on for ${durationLabel}.`,
       pulseMs: result.pulseMs,
       activeUntil: result.activeUntil,
+      indefinite,
     });
   } catch (err) {
     console.error('Switch error:', err);
@@ -371,7 +375,7 @@ app.post('/api/admin/users/:id/subscription', authMiddleware, adminMiddleware, a
 });
 
 app.get('/api/elevator/config', (_req, res) => {
-  res.json({ pulseMs: getPulseMs() });
+  res.json({ pulseMs: getPulseMs(), indefinite: isIndefiniteMode() });
 });
 
 app.get('/api/health', (_req, res) => {
