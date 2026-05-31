@@ -112,21 +112,6 @@ export default function Admin() {
     }
   }
 
-  async function makeMyPermanent() {
-    setError('');
-    setSuccess('');
-    setProcessingId('self');
-    try {
-      await api.setMyPermanent();
-      setSuccess('Your subscription is now permanent.');
-      await load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setProcessingId(null);
-    }
-  }
-
   async function createUser(e) {
     e.preventDefault();
     setError('');
@@ -194,11 +179,6 @@ export default function Admin() {
           </button>
         </div>
 <div style={{ marginBottom: 12 }}>
-          <button type="button" className="btn-ghost" onClick={makeMyPermanent} disabled={processingId === 'self'}>
-            Make my subscription permanent
-          </button>
-        </div>
-        <div style={{ marginBottom: 12 }}>
           <button
             type="button"
             className="btn-primary"
