@@ -1,7 +1,12 @@
 /**
  * Controls the breaker/relay that enables elevator access.
  * SWITCH_TYPE: mock | http | shelly | tuya
+ *
+ * Breaker state (indefinite mode, isOn) is persisted to the database
+ * so it survives server restarts (e.g. Render free-tier spin-down).
  */
+
+import { queryOne, execute } from './db/index.js';
 
 const SWITCH_TYPE = process.env.SWITCH_TYPE || 'mock';
 const PULSE_MS = Number(process.env.ELEVATOR_PULSE_MS || 60000);
@@ -16,6 +21,48 @@ export function getPulseMs() {
   return PULSE_MS;
 }
 
+async function persistState() {
+  try {
+    await execute(
+      'UPDATE switch_state SET indefinite = ?, is_on = ? WHERE id = 1',
+      [indefiniteMode ? 1 : 0, isOn ? 1 : 0]
+    );
+  } catch (err) {
+    console.error('[switch] failed to persist state:', err.message);
+  }
+}
+
+export async function restoreSwitchState() {
+  try {
+    const row = await queryOne('SELECT indefinite, is_on FROM switch_state WHERE id = 1');
+    if (!row) return;
+
+    const wasIndefinite = Boolean(row.indefinite);
+    const wasOn = Boolean(row.is_on);
+
+    indefiniteMode = wasIndefinite;
+
+    if (wasIndefinite) {
+      console.log('[switch] restoring indefinite mode ON from persisted state');
+      try {
+        await turnSwitchOn();
+      } catch (err) {
+        console.error('[switch] failed to restore breaker ON:', err.message);
+      }
+    } else if (wasOn) {
+      console.log('[switch] clearing orphaned ON state (timer was lost on restart)');
+      try {
+        await turnSwitchOff();
+      } catch (err) {
+        console.error('[switch] failed to turn off orphaned breaker:', err.message);
+      }
+      await persistState();
+    }
+  } catch (err) {
+    console.error('[switch] failed to restore state:', err.message);
+  }
+}
+
 async function fetchSwitch(url, method = 'GET') {
   const res = await fetch(url, { method, signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`Switch request failed: ${res.status}`);
@@ -27,12 +74,14 @@ export async function turnSwitchOn() {
     case 'mock':
       console.log('[switch] MOCK ON');
       isOn = true;
+      await persistState();
       return { ok: true, mode: 'mock' };
     case 'http': {
       const url = process.env.SWITCH_ON_URL;
       if (!url) throw new Error('SWITCH_ON_URL not configured');
       await fetchSwitch(url);
       isOn = true;
+      await persistState();
       return { ok: true, mode: 'http' };
     }
     case 'shelly': {
@@ -41,12 +90,14 @@ export async function turnSwitchOn() {
       if (!host) throw new Error('SHELLY_HOST not configured');
       await fetchSwitch(`${host.replace(/\/$/, '')}/relay/${relayId}?turn=on`);
       isOn = true;
+      await persistState();
       return { ok: true, mode: 'shelly' };
     }
     case 'tuya': {
       const { setTuyaBreaker } = await import('./tuya.js');
       await setTuyaBreaker(true);
       isOn = true;
+      await persistState();
       return { ok: true, mode: 'tuya' };
     }
     default:
@@ -60,12 +111,14 @@ export async function turnSwitchOff() {
     case 'mock':
       console.log('[switch] MOCK OFF');
       isOn = false;
+      await persistState();
       return { ok: true, mode: 'mock' };
     case 'http': {
       const url = process.env.SWITCH_OFF_URL;
       if (!url) throw new Error('SWITCH_OFF_URL not configured');
       await fetchSwitch(url);
       isOn = false;
+      await persistState();
       return { ok: true, mode: 'http' };
     }
     case 'shelly': {
@@ -74,12 +127,14 @@ export async function turnSwitchOff() {
       if (!host) throw new Error('SHELLY_HOST not configured');
       await fetchSwitch(`${host.replace(/\/$/, '')}/relay/${relayId}?turn=off`);
       isOn = false;
+      await persistState();
       return { ok: true, mode: 'shelly' };
     }
     case 'tuya': {
       const { setTuyaBreaker } = await import('./tuya.js');
       await setTuyaBreaker(false);
       isOn = false;
+      await persistState();
       return { ok: true, mode: 'tuya' };
     }
     default:
@@ -102,14 +157,12 @@ async function verifyBreakerIsOn() {
 
 function scheduleTurnOff(delayMs) {
   if (indefiniteMode) {
-    // Admin requested indefinite on — do not schedule auto-off.
     return;
   }
   if (offTimer) clearTimeout(offTimer);
   offTimer = setTimeout(async () => {
     offTimer = null;
     try {
-      // clear activeUntil before calling turn off
       activeUntil = null;
       await turnSwitchOff();
     } catch (err) {
@@ -153,7 +206,7 @@ export async function pulseElevatorAccess() {
   return { pulseMs: result.pulseMs };
 }
 
-export function setIndefiniteMode(on) {
+export async function setIndefiniteMode(on) {
   indefiniteMode = Boolean(on);
   if (indefiniteMode) {
     if (offTimer) {
@@ -164,6 +217,7 @@ export function setIndefiniteMode(on) {
   } else {
     activeUntil = null;
   }
+  await persistState();
   return indefiniteMode;
 }
 

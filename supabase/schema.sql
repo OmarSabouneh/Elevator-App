@@ -1,6 +1,14 @@
 -- Run once in Supabase: SQL Editor → New query → Run
 -- (The server also runs this on startup if tables are missing.)
 
+CREATE TABLE IF NOT EXISTS switch_state (
+  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  indefinite BOOLEAN NOT NULL DEFAULT FALSE,
+  is_on BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+INSERT INTO switch_state (id, indefinite, is_on) VALUES (1, FALSE, FALSE) ON CONFLICT (id) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS users (
   id BIGSERIAL PRIMARY KEY,
   phone TEXT NOT NULL UNIQUE,

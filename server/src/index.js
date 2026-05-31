@@ -21,6 +21,7 @@ import {
   setIndefiniteMode,
   isIndefiniteMode,
   getSwitchState,
+  restoreSwitchState,
 } from './switch.js';
 
 const app = express();
@@ -215,7 +216,7 @@ app.get('/api/switch/state', authMiddleware, adminMiddleware, (_req, res) => {
 app.post('/api/switch/indefinite', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { on } = req.body;
-    const enabled = setIndefiniteMode(Boolean(on));
+    const enabled = await setIndefiniteMode(Boolean(on));
     if (enabled) {
       await turnSwitchOn();
       res.json({ ok: true, indefinite: true, state: 'on' });
@@ -413,6 +414,7 @@ async function start() {
   await initDb();
   await ensureAdmin();
   await migratePhoneNumbers();
+  await restoreSwitchState();
 
   app.listen(PORT, () => {
     console.log(`Elevator API running on http://localhost:${PORT}`);
