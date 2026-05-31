@@ -131,7 +131,14 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            String url = webView.getUrl();
+            boolean atRoot = url != null && (url.equals(SITE_URL) || url.equals(SITE_URL + "#/") || url.endsWith("/") && url.startsWith(SITE_URL));
+            boolean atLogin = url != null && url.contains("/login");
+            if (atRoot || atLogin || !webView.canGoBack()) {
+                moveTaskToBack(true);
+                return true;
+            }
             webView.goBack();
             return true;
         }
