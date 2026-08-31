@@ -37,3 +37,10 @@ export async function execute(sql, params = []) {
   const result = db.prepare(sql).run(...params);
   return { insertId: result.lastInsertRowid };
 }
+
+export async function pingSqlite() {
+  if (!db) return false;
+  const res = db.prepare('SELECT 1 as ping').get();
+  return res?.ping === 1;
+}
+

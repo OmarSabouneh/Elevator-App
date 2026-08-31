@@ -5,7 +5,16 @@ import { createCorsMiddleware } from './cors.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { initDb, queryOne, queryAll, execute, getDbDriver } from './db/index.js';
+import {
+  initDb,
+  queryOne,
+  queryAll,
+  execute,
+  getDbDriver,
+  pingDb,
+  getLastPingInfo,
+  startDatabaseKeepAlive,
+} from './db/index.js';
 import {
   signToken,
   authMiddleware,
@@ -379,7 +388,19 @@ app.get('/api/elevator/config', (_req, res) => {
   res.json({ pulseMs: getPulseMs(), indefinite: isIndefiniteMode() });
 });
 
+app.all(['/api/ping-db', '/api/db/ping'], async (_req, res) => {
+  const result = await pingDb();
+  res.json({
+    ok: result.ok,
+    message: result.ok ? 'Database pinged successfully' : 'Database ping failed',
+    database: result.driver,
+    timestamp: result.timestamp,
+    error: result.error || null,
+  });
+});
+
 app.get('/api/health', (_req, res) => {
+  const pingInfo = getLastPingInfo();
   res.json({
     ok: true,
     database: getDbDriver(),
@@ -389,6 +410,8 @@ app.get('/api/health', (_req, res) => {
       process.env.TUYA_ACCESS_ID && process.env.TUYA_ACCESS_SECRET && process.env.TUYA_DEVICE_ID
     ),
     subscriptionDays: SUBSCRIPTION_DAYS,
+    lastDbPing: pingInfo.lastPingTime,
+    lastDbPingStatus: pingInfo.lastPingStatus,
   });
 });
 
@@ -412,6 +435,7 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
 
 async function start() {
   await initDb();
+  startDatabaseKeepAlive();
   await ensureAdmin();
   await migratePhoneNumbers();
   await restoreSwitchState();

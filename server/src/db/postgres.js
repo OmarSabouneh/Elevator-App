@@ -56,3 +56,10 @@ export async function execute(sql, params = []) {
   const res = await pool.query(q, params);
   return { insertId: res.rows[0]?.id };
 }
+
+export async function pingPostgres() {
+  if (!pool) return false;
+  const res = await pool.query('SELECT 1 as ping');
+  return res.rows[0]?.ping === 1;
+}
+

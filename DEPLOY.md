@@ -88,8 +88,20 @@ Push the repo (never commit `server/.env`).
 
 ---
 
-## Free tier limits
+## Free tier limits & Keeping Supabase Active
 
-- **Render:** sleeps when idle; first request may take ~30s.
-- **Supabase:** pauses after long inactivity; wake in dashboard.
-- **Vercel:** hobby free for personal projects.
+- **Render:** Sleeps when idle for 15 minutes; first request after sleep takes ~30s.
+- **Supabase:** Pauses after 7 days of inactivity (no SQL queries executed).
+- **Vercel:** Hobby free for personal projects.
+
+### Prevent Supabase Pausing (Database Keep-Alive)
+The backend automatically executes a `SELECT 1` ping against Supabase on startup and schedules a background ping once every 24 hours (`DB_PING_INTERVAL_HOURS=24`).
+
+**Recommended setup to keep both Render and Supabase active 24/7:**
+Create a free daily ping monitor (e.g. using [cron-job.org](https://cron-job.org) or [UptimeRobot](https://uptimerobot.com)):
+- **URL:** `https://YOUR-API.onrender.com/api/ping-db`
+- **Schedule:** Once per day (or every 12 hours)
+- **HTTP Method:** `GET`
+
+This ping wakes up Render and executes a query on Supabase, preventing both services from pausing.
+
