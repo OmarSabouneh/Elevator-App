@@ -14,6 +14,7 @@ import {
   pingDb,
   getLastPingInfo,
   startDatabaseKeepAlive,
+  cleanupOldLogs,
 } from './db/index.js';
 import {
   signToken,
@@ -43,6 +44,20 @@ app.use(express.urlencoded({ extended: true }));
 
 async function getUserById(id) {
   return queryOne('SELECT * FROM users WHERE id = ?', [id]);
+}
+
+async function logTurnOn(userId, action = 'elevator_call') {
+  try {
+    const iso = new Date().toISOString();
+    await execute('INSERT INTO access_logs (user_id, action, created_at) VALUES (?, ?, ?)', [
+      userId,
+      action,
+      iso,
+    ]);
+    cleanupOldLogs(60).catch(() => {});
+  } catch (err) {
+    console.error('[access_logs] failed to record log:', err.message);
+  }
 }
 
 function publicUser(row) {
@@ -169,10 +184,7 @@ app.post('/api/elevator/call', authMiddleware, async (req, res) => {
 
   try {
     const result = await enableElevatorAccess();
-    await execute('INSERT INTO access_logs (user_id, action) VALUES (?, ?)', [
-      user.id,
-      'elevator_call',
-    ]);
+    await logTurnOn(user.id, 'elevator_call');
     const indefinite = result.indefinite;
     const minutes = Math.round(result.pulseMs / 60000);
     const durationLabel =
@@ -198,6 +210,7 @@ app.post('/api/elevator/call', authMiddleware, async (req, res) => {
 app.post('/api/switch/on', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     await turnSwitchOn();
+    await logTurnOn(req.user.sub, 'switch_on');
     res.json({ ok: true, state: 'on' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -228,6 +241,7 @@ app.post('/api/switch/indefinite', authMiddleware, adminMiddleware, async (req, 
     const enabled = await setIndefiniteMode(Boolean(on));
     if (enabled) {
       await turnSwitchOn();
+      await logTurnOn(req.user.sub, 'switch_indefinite_on');
       res.json({ ok: true, indefinite: true, state: 'on' });
     } else {
       await turnSwitchOff();
@@ -246,6 +260,95 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
     res.json({ users: rows.map(publicUser), subscriptionDays: SUBSCRIPTION_DAYS });
   } catch (err) {
     res.status(500).json({ error: 'Request failed' });
+  }
+});
+
+app.get('/api/admin/logs', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { from, to, userId, action } = req.query;
+    const isPg = getDbDriver() === 'postgres';
+
+    let query = `
+      SELECT 
+        l.id,
+        l.user_id,
+        l.action,
+        l.created_at,
+        u.phone,
+        u.first_name,
+        u.last_name,
+        u.role
+      FROM access_logs l
+      LEFT JOIN users u ON u.id = l.user_id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (action) {
+      query += ' AND l.action = ?';
+      params.push(action);
+    } else {
+      query += ` AND l.action IN ('elevator_call', 'switch_on', 'switch_indefinite_on')`;
+    }
+
+    if (userId && userId !== 'all') {
+      query += ' AND l.user_id = ?';
+      params.push(Number(userId));
+    }
+
+    if (from) {
+      if (isPg) {
+        query += ' AND l.created_at >= ?';
+      } else {
+        query += ' AND datetime(l.created_at) >= datetime(?)';
+      }
+      params.push(from);
+    }
+
+    if (to) {
+      if (isPg) {
+        query += ' AND l.created_at <= ?';
+      } else {
+        query += ' AND datetime(l.created_at) <= datetime(?)';
+      }
+      params.push(to);
+    }
+
+    query += ' ORDER BY l.created_at DESC LIMIT 1000';
+
+    const rows = await queryAll(query, params);
+
+    const logs = rows.map((r) => {
+      let iso = r.created_at;
+      if (r.created_at instanceof Date) {
+        iso = r.created_at.toISOString();
+      } else if (typeof r.created_at === 'string') {
+        if (!r.created_at.includes('T')) {
+          iso = new Date(r.created_at.replace(' ', 'T') + 'Z').toISOString();
+        } else {
+          iso = new Date(r.created_at).toISOString();
+        }
+      }
+
+      return {
+        id: r.id,
+        userId: r.user_id,
+        action: r.action,
+        createdAt: iso,
+        user: {
+          id: r.user_id,
+          phone: r.phone || '',
+          firstName: r.first_name || '',
+          lastName: r.last_name || '',
+          role: r.role || 'user',
+        },
+      };
+    });
+
+    res.json({ logs });
+  } catch (err) {
+    console.error('Error fetching admin logs:', err);
+    res.status(500).json({ error: 'Failed to fetch access logs' });
   }
 });
 
@@ -439,6 +542,7 @@ async function start() {
   await ensureAdmin();
   await migratePhoneNumbers();
   await restoreSwitchState();
+  await cleanupOldLogs(60);
 
   app.listen(PORT, () => {
     console.log(`Elevator API running on http://localhost:${PORT}`);

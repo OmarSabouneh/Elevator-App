@@ -385,3 +385,434 @@ button:disabled {
   flex: 1;
   margin-top: 0;
 }
+
+/* --- Admin Nav Dropdown --- */
+.admin-nav-container {
+  position: relative;
+  display: inline-block;
+}
+
+.admin-nav-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: auto;
+  margin-top: 0;
+  padding: 0.35rem 0.65rem;
+  background: var(--surface2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-nav-trigger:hover,
+.admin-nav-trigger.open {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent);
+}
+
+.admin-nav-trigger-badge {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-nav-trigger-label {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.admin-nav-chevron {
+  transition: transform 0.2s ease;
+  color: var(--muted);
+}
+
+.admin-nav-chevron.rotated {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.admin-nav-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #182234;
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 0.4rem;
+  z-index: 1000;
+  animation: modal-in 0.15s ease-out;
+}
+
+.admin-nav-header {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 0.35rem 0.6rem 0.25rem;
+  font-weight: 700;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent);
+}
+
+.admin-nav-item.active {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.admin-nav-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.admin-nav-item.active .admin-nav-item-icon {
+  color: var(--accent);
+}
+
+.admin-nav-item-text {
+  flex: 1;
+}
+
+.admin-nav-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* --- Admin Activity Logs Page --- */
+.log-day-card {
+  padding: 1rem;
+}
+
+.log-day-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-day-nav {
+  width: auto;
+  margin-top: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-day-today {
+  width: auto;
+  margin-top: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+}
+
+.log-date-picker-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.log-date-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 8px;
+  color-scheme: dark;
+}
+
+.log-day-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--surface2);
+}
+
+.log-day-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.badge-count {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-weight: 600;
+}
+
+/* Filter Card */
+.log-filter-card {
+  padding: 1rem;
+}
+
+.log-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.log-filter-field {
+  flex: 1;
+}
+
+.log-filter-field label {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.log-select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--surface2);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.log-select:focus {
+  border-color: var(--accent);
+}
+
+.log-filter-time-group {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.log-time-input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--surface2);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  color-scheme: dark;
+}
+
+.log-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.btn-clear-filters {
+  width: auto;
+  margin-top: 0;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--surface2);
+  border-radius: 8px;
+}
+
+.btn-refresh {
+  width: auto;
+  margin-top: 0;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8rem;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white;
+  border-radius: 8px;
+}
+
+/* Logs List */
+.log-list-card {
+  padding: 0.75rem;
+  margin-top: 1rem;
+}
+
+.log-empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.log-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.7;
+}
+
+.log-empty-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.log-empty-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.log-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.log-item:hover {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.log-time-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.55rem;
+  background: var(--surface2);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.log-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.log-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.log-primary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.log-user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-secondary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.log-phone {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-call {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.badge-indefinite {
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badge-manual {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.badge-admin-tag {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 0.05rem 0.4rem;
+  font-size: 0.65rem;
+}
+
+/* Retention Banner */
+.log-retention-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px dashed rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.log-retention-banner strong {
+  color: var(--text);
+}

@@ -41,9 +41,15 @@ CREATE TABLE IF NOT EXISTS access_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_access_logs_created_at ON access_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE switch_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE access_logs ENABLE ROW LEVEL SECURITY;
+
+-- Optional: 60-day cleanup query (the Node.js backend also runs this automatically)
+-- DELETE FROM access_logs WHERE created_at < NOW() - INTERVAL '60 days';
 

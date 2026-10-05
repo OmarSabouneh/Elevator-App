@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS access_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_access_logs_created_at ON access_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id);
+
 ALTER TABLE switch_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
@@ -85,4 +88,7 @@ CREATE TABLE IF NOT EXISTS access_logs (
   action TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_access_logs_created_at ON access_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id);
 `;

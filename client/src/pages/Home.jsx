@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { formatPhoneLocal } from '../phone';
+import AdminNav from '../components/AdminNav';
 
 const ELEVATOR_TIMER_KEY = 'elevatorActiveUntil';
 const ELEVATOR_INDEFINITE_KEY = 'elevatorIndefinite';
@@ -112,9 +113,12 @@ export default function Home({ auth }) {
           <h1>Welcome, {displayName}</h1>
           <small>{formatPhoneLocal(user.phone)}</small>
         </div>
-        <button type="button" className="link" onClick={logout}>
-          Log out
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {user.role === 'admin' && <AdminNav current="/" />}
+          <button type="button" className="link" onClick={logout}>
+            Log out
+          </button>
+        </div>
       </header>
 
       <div className="card">

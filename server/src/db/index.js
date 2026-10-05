@@ -61,6 +61,20 @@ export function getLastPingInfo() {
   };
 }
 
+export async function cleanupOldLogs(days = 60) {
+  try {
+    const numDays = Math.max(1, Number(days) || 60);
+    if (driver === 'postgres') {
+      await execute(`DELETE FROM access_logs WHERE created_at < NOW() - INTERVAL '${numDays} days'`);
+    } else {
+      await execute(`DELETE FROM access_logs WHERE datetime(created_at) < datetime('now', '-${numDays} days')`);
+    }
+    console.log(`[Logs Retention] Purged access logs older than ${numDays} days`);
+  } catch (err) {
+    console.error('[Logs Retention] Error cleaning up old logs:', err.message);
+  }
+}
+
 export function startDatabaseKeepAlive() {
   const hours = Number(process.env.DB_PING_INTERVAL_HOURS || 24);
   const intervalMs = Math.max(1, hours) * 60 * 60 * 1000;
@@ -70,6 +84,7 @@ export function startDatabaseKeepAlive() {
   pingDb().then((res) => {
     if (res.ok) {
       console.log(`[Database Keep-Alive] Initial ping successful (${res.driver} active at ${res.timestamp})`);
+      cleanupOldLogs(60).catch(() => {});
     } else {
       console.warn(`[Database Keep-Alive] Initial ping failed: ${res.error || res.lastPingStatus}`);
     }
@@ -81,6 +96,7 @@ export function startDatabaseKeepAlive() {
     const res = await pingDb();
     if (res.ok) {
       console.log(`[Database Keep-Alive] Scheduled ping successful at ${res.timestamp}`);
+      cleanupOldLogs(60).catch(() => {});
     } else {
       console.warn(`[Database Keep-Alive] Scheduled ping failed: ${res.error}`);
     }

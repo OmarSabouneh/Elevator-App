@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { formatPhoneLocal } from '../phone';
+import AdminNav from '../components/AdminNav';
 
 function Modal({ title, message, children, onClose }) {
   return (
@@ -223,11 +224,14 @@ export default function Admin() {
       <header className="header">
         <div>
           <h1>Admin</h1>
-          <small>Activate subscriptions manually</small>
+          <small>Manage users & breaker</small>
         </div>
-        <Link to="/" className="link">
-          Back
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <AdminNav current="/admin" />
+          <Link to="/" className="link">
+            Back
+          </Link>
+        </div>
       </header>
 
       <div className="card">

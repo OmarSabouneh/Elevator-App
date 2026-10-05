@@ -41,4 +41,11 @@ export const api = {
   deleteUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
   editSubscription: (id, days) => request(`/admin/users/${id}/subscription`, { method: 'POST', body: JSON.stringify({ days }) }),
   createUser: (body) => request('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
-  };
+  adminLogs: (params = {}) => {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request(`/admin/logs${qs ? '?' + qs : ''}`);
+  },
+};

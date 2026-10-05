@@ -21,6 +21,8 @@ export async function initSqlite() {
     db.exec('ALTER TABLE users ADD COLUMN username TEXT');
   }
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_access_logs_created_at ON access_logs(created_at)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id)');
 
   return 'sqlite';
 }

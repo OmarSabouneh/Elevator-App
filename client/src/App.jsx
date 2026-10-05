@@ -4,6 +4,7 @@ import { api } from './api';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
+import AdminLogs from './pages/AdminLogs';
 
 function useAuth() {
   const [user, setUser] = useState(null);
@@ -68,6 +69,14 @@ export default function App() {
         element={
           <ProtectedRoute user={auth.user} loading={auth.loading}>
             {auth.user?.role === 'admin' ? <Admin auth={auth} /> : <Navigate to="/" replace />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/logs"
+        element={
+          <ProtectedRoute user={auth.user} loading={auth.loading}>
+            {auth.user?.role === 'admin' ? <AdminLogs auth={auth} /> : <Navigate to="/" replace />}
           </ProtectedRoute>
         }
       />
