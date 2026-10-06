@@ -45,15 +45,6 @@ export default function Login({ auth }) {
     }
   }
 
-  const hasSavedCredentials = !!(localStorage.getItem('saved_phone') || localStorage.getItem('saved_password'));
-
-  function handleClearSaved() {
-    localStorage.removeItem('saved_phone');
-    localStorage.removeItem('saved_password');
-    setPhone('');
-    setPassword('');
-  }
-
   return (
     <>
       <header className="header">
@@ -96,24 +87,26 @@ export default function Login({ auth }) {
           <label htmlFor="remember">Remember credentials on this device</label>
         </div>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <div>
+            <p className="error">{error}</p>
+            {(!navigator.onLine || error.toLowerCase().includes('internet') || error.toLowerCase().includes('connection')) && (
+              <p style={{ marginTop: '0.6rem', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  className="offline-refresh-btn"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh
+                </button>
+              </p>
+            )}
+          </div>
+        )}
 
         <button type="submit" className="btn-primary" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-
-        {hasSavedCredentials && (
-          <p style={{ marginTop: '0.9rem', textAlign: 'center' }}>
-            <button
-              type="button"
-              className="link"
-              style={{ fontSize: '0.85rem' }}
-              onClick={handleClearSaved}
-            >
-              Clear saved credentials
-            </button>
-          </p>
-        )}
       </form>
     </>
   );

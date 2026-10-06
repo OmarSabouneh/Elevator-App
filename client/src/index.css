@@ -836,6 +836,31 @@ button:disabled {
   -webkit-backdrop-filter: blur(8px);
 }
 
+.offline-refresh-btn {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 0;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.offline-refresh-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.offline-refresh-btn:active {
+  transform: scale(0.96);
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;

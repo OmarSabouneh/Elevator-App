@@ -163,7 +163,22 @@ export default function Home({ auth }) {
         </button>
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+          <p className="error" style={{ marginTop: 0 }}>{error}</p>
+          {(!navigator.onLine || error.toLowerCase().includes('internet') || error.toLowerCase().includes('connection') || error.toLowerCase().includes('reach the server')) && (
+            <p style={{ marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className="offline-refresh-btn"
+                onClick={() => window.location.reload()}
+              >
+                Refresh
+              </button>
+            </p>
+          )}
+        </div>
+      )}
       {success && <p className="success-msg">{success}</p>}
 
       {user.role === 'admin' && (

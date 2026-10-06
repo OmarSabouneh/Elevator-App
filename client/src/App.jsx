@@ -91,6 +91,13 @@ function OfflineBanner() {
   return (
     <div className="offline-banner" role="status">
       <span>Offline mode &bull; Credentials saved</span>
+      <button
+        type="button"
+        className="offline-refresh-btn"
+        onClick={() => window.location.reload()}
+      >
+        Refresh
+      </button>
     </div>
   );
 }
