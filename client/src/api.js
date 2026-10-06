@@ -15,14 +15,25 @@ async function request(path, options = {}) {
       ...options,
       headers: { ...headers(), ...options.headers },
     });
-  } catch {
+  } catch (err) {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
     const hint = import.meta.env.VITE_API_URL
       ? `API: ${import.meta.env.VITE_API_URL}`
-      : 'VITE_API_URL is not set (Vercel must rebuild after adding it).';
-    throw new Error(`Cannot reach the server. ${hint}`);
+      : 'VITE_API_URL is not set.';
+    const msg = isOffline
+      ? 'No internet connection. Please check your network and try again.'
+      : `Cannot reach the server. ${hint}`;
+    const networkErr = new Error(msg);
+    networkErr.isNetworkError = true;
+    networkErr.status = 0;
+    throw networkErr;
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+  if (!res.ok) {
+    const error = new Error(data.error || data.message || 'Request failed');
+    error.status = res.status;
+    throw error;
+  }
   return data;
 }
 
