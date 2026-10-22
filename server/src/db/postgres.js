@@ -50,11 +50,21 @@ export async function queryAll(sql, params = []) {
 export async function execute(sql, params = []) {
   let q = toPgParams(sql);
   const upper = q.trim().toUpperCase();
-  if (upper.startsWith('INSERT') && !upper.includes('RETURNING')) {
+  const appendedReturning = upper.startsWith('INSERT') && !upper.includes('RETURNING');
+  if (appendedReturning) {
     q += ' RETURNING id';
   }
-  const res = await pool.query(q, params);
-  return { insertId: res.rows[0]?.id };
+  try {
+    const res = await pool.query(q, params);
+    return { insertId: res.rows[0]?.id };
+  } catch (err) {
+    if (appendedReturning && err.message && err.message.includes('column "id" does not exist')) {
+      const fallbackQuery = q.slice(0, -' RETURNING id'.length);
+      const res = await pool.query(fallbackQuery, params);
+      return { insertId: res.rows[0]?.id };
+    }
+    throw err;
+  }
 }
 
 export async function pingPostgres() {

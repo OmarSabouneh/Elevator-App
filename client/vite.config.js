@@ -7,7 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'sw-push.js'],
+      workbox: {
+        importScripts: ['sw-push.js'],
+      },
       manifest: {
         name: 'Elevator Access',
         short_name: 'Elevator',

@@ -32,7 +32,21 @@ import {
   isIndefiniteMode,
   getSwitchState,
   restoreSwitchState,
+  setMockSwitchOnline,
 } from './switch.js';
+import {
+  initNotifications,
+  getVapidPublicKey,
+  saveSubscription,
+  removeSubscription,
+  sendTestPushToUser,
+  getPushSubscriberCount,
+} from './notifications.js';
+import {
+  startSwitchMonitor,
+  runSwitchCheck,
+  getSwitchMonitorStatus,
+} from './switchMonitor.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -252,6 +266,83 @@ app.post('/api/switch/indefinite', authMiddleware, adminMiddleware, async (req, 
   }
 });
 
+// --- Switch Availability & Monitoring ---
+
+app.get('/api/switch/availability', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const monitor = getSwitchMonitorStatus();
+    const subscriberCount = await getPushSubscriberCount();
+    res.json({ ok: true, ...monitor, subscriberCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/switch/check-now', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const checkResult = await runSwitchCheck(true);
+    const subscriberCount = await getPushSubscriberCount();
+    res.json({ ok: true, result: checkResult, subscriberCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/switch/mock-online', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { online } = req.body;
+    setMockSwitchOnline(Boolean(online));
+    const checkResult = await runSwitchCheck(true);
+    res.json({ ok: true, simulatedOnline: Boolean(online), result: checkResult });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Push Notifications ---
+
+app.get('/api/notifications/vapid-public-key', (_req, res) => {
+  const key = getVapidPublicKey();
+  if (!key) return res.status(503).json({ error: 'Push service not ready yet' });
+  res.json({ ok: true, publicKey: key });
+});
+
+app.post('/api/notifications/subscribe', authMiddleware, async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription) {
+      return res.status(400).json({ error: 'subscription payload is required' });
+    }
+    const userAgent = req.headers['user-agent'] || '';
+    const result = await saveSubscription(req.user.sub, subscription, userAgent);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('Subscription error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notifications/unsubscribe', authMiddleware, async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: 'endpoint is required' });
+    await removeSubscription(endpoint);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notifications/test', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await sendTestPushToUser(req.user.sub);
+    res.json({ ok: true, message: 'Test notification sent successfully', ...result });
+  } catch (err) {
+    console.error('Test push error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const rows = await queryAll(
@@ -288,7 +379,7 @@ app.get('/api/admin/logs', authMiddleware, adminMiddleware, async (req, res) => 
       query += ' AND l.action = ?';
       params.push(action);
     } else {
-      query += ` AND l.action IN ('elevator_call', 'switch_on', 'switch_indefinite_on')`;
+      query += ` AND l.action IN ('elevator_call', 'switch_on', 'switch_indefinite_on', 'switch_offline', 'switch_online')`;
     }
 
     if (userId && userId !== 'all') {
@@ -539,6 +630,8 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
 async function start() {
   await initDb();
   startDatabaseKeepAlive();
+  await initNotifications();
+  startSwitchMonitor();
   await ensureAdmin();
   await migratePhoneNumbers();
   await restoreSwitchState();

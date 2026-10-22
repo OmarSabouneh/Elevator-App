@@ -105,3 +105,25 @@ Create a free daily ping monitor (e.g. using [cron-job.org](https://cron-job.org
 
 This ping wakes up Render and executes a query on Supabase, preventing both services from pausing.
 
+---
+
+## 6. Switch Availability Monitoring & Instant Push Alerts
+
+The app automatically checks the WiFi breaker switch availability **every 5 minutes**. If the switch goes offline, an instant push notification is sent to the admin.
+
+### How Admin Receives Push Notifications (Without Changing the APK):
+1. Open the app on your phone (using **Chrome on Android** or installed via **Add to Home Screen / PWA**).
+2. Log in with your admin credentials.
+3. In the Admin dashboard, find the **Breaker Switch Status** card and tap **Enable Push Notifications**.
+4. Tap **Send Test Push** to verify instant notification delivery on your phone.
+5. Whenever the switch goes offline, you will immediately receive an alert notification. When it reconnects, a recovery notification will confirm it is back online.
+
+### Keep 5-Minute Checks Running 24/7 on Free-Tier Render:
+Because Render's free tier sleeps after 15 minutes of inactivity, set a free 5-minute monitor on [cron-job.org](https://cron-job.org) or [UptimeRobot](https://uptimerobot.com):
+- **URL:** `https://YOUR-API.onrender.com/api/switch/availability`
+- **Schedule:** Every 5 minutes
+- **Method:** `GET`
+
+This keeps the API awake 24/7 so the 5-minute switch monitor never stops checking.
+
+

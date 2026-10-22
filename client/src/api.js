@@ -59,4 +59,14 @@ export const api = {
     const qs = new URLSearchParams(cleanParams).toString();
     return request(`/admin/logs${qs ? '?' + qs : ''}`);
   },
+  switchAvailability: () => request('/switch/availability'),
+  checkSwitchNow: () => request('/switch/check-now', { method: 'POST' }),
+  simulateSwitchOnline: (online) =>
+    request('/switch/mock-online', { method: 'POST', body: JSON.stringify({ online }) }),
+  getVapidPublicKey: () => request('/notifications/vapid-public-key'),
+  subscribePush: (subscription) =>
+    request('/notifications/subscribe', { method: 'POST', body: JSON.stringify({ subscription }) }),
+  unsubscribePush: (endpoint) =>
+    request('/notifications/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) }),
+  testPushNotification: () => request('/notifications/test', { method: 'POST' }),
 };

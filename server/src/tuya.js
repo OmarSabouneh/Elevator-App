@@ -122,15 +122,39 @@ export async function waitForTuyaSwitchOn(maxWaitMs = 15000, intervalMs = 1000) 
   return false;
 }
 
+export async function checkTuyaDeviceOnline() {
+  const ctx = getTuyaClient();
+  const deviceId = getTuyaDeviceId();
+
+  const res = await ctx.request({
+    method: 'GET',
+    path: `/v1.0/devices/${deviceId}`,
+  });
+
+  if (!res?.success) {
+    const msg = res?.msg || res?.message || 'Failed to fetch Tuya device status';
+    throw new Error(msg);
+  }
+
+  const result = res.result || {};
+  return {
+    online: Boolean(result.online),
+    name: result.name || 'WiFi Switch',
+    ip: result.ip || null,
+    updateTime: result.update_time || null,
+  };
+}
+
 export async function fetchTuyaDeviceInfo() {
   const ctx = getTuyaClient();
   const deviceId = getTuyaDeviceId();
 
   const [detail, functions, status] = await Promise.all([
-    ctx.device.detail({ device_id: deviceId }),
+    ctx.request({ method: 'GET', path: `/v1.0/devices/${deviceId}` }),
     ctx.request({ method: 'GET', path: `/v1.0/iot-03/devices/${deviceId}/functions` }),
     ctx.request({ method: 'GET', path: `/v1.0/iot-03/devices/${deviceId}/status` }),
   ]);
 
   return { detail, functions, status };
 }
+

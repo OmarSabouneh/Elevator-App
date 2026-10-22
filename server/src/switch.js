@@ -228,3 +228,110 @@ export function isIndefiniteMode() {
 export function getSwitchState() {
   return { isOn, indefinite: indefiniteMode, activeUntil };
 }
+
+let mockSwitchOnline = true;
+
+export function setMockSwitchOnline(isOnline) {
+  mockSwitchOnline = Boolean(isOnline);
+  return mockSwitchOnline;
+}
+
+export function getSwitchType() {
+  return SWITCH_TYPE;
+}
+
+export async function checkSwitchAvailability() {
+  switch (SWITCH_TYPE) {
+    case 'tuya': {
+      try {
+        const { checkTuyaDeviceOnline } = await import('./tuya.js');
+        const info = await checkTuyaDeviceOnline();
+        return {
+          online: info.online,
+          switchType: 'tuya',
+          deviceName: info.name,
+          ip: info.ip,
+          lastReported: info.updateTime ? new Date(info.updateTime * 1000).toISOString() : null,
+          checkedAt: new Date().toISOString(),
+        };
+      } catch (err) {
+        return {
+          online: false,
+          switchType: 'tuya',
+          error: err.message,
+          checkedAt: new Date().toISOString(),
+        };
+      }
+    }
+    case 'shelly': {
+      const host = process.env.SHELLY_HOST;
+      if (!host) {
+        return {
+          online: false,
+          switchType: 'shelly',
+          error: 'SHELLY_HOST not configured',
+          checkedAt: new Date().toISOString(),
+        };
+      }
+      try {
+        const res = await fetch(`${host.replace(/\/$/, '')}/status`, { signal: AbortSignal.timeout(6000) });
+        return {
+          online: res.ok,
+          switchType: 'shelly',
+          status: res.status,
+          checkedAt: new Date().toISOString(),
+        };
+      } catch (err) {
+        return {
+          online: false,
+          switchType: 'shelly',
+          error: err.message,
+          checkedAt: new Date().toISOString(),
+        };
+      }
+    }
+    case 'http': {
+      const url = process.env.SWITCH_ON_URL;
+      if (!url) {
+        return {
+          online: false,
+          switchType: 'http',
+          error: 'SWITCH_ON_URL not configured',
+          checkedAt: new Date().toISOString(),
+        };
+      }
+      try {
+        const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(6000) });
+        return {
+          online: res.ok,
+          switchType: 'http',
+          status: res.status,
+          checkedAt: new Date().toISOString(),
+        };
+      } catch (err) {
+        return {
+          online: false,
+          switchType: 'http',
+          error: err.message,
+          checkedAt: new Date().toISOString(),
+        };
+      }
+    }
+    case 'mock': {
+      const isOnline = mockSwitchOnline !== undefined ? mockSwitchOnline : (process.env.MOCK_SWITCH_ONLINE !== 'false');
+      return {
+        online: isOnline,
+        switchType: 'mock',
+        checkedAt: new Date().toISOString(),
+      };
+    }
+    default:
+      return {
+        online: false,
+        switchType: SWITCH_TYPE,
+        error: `Unknown SWITCH_TYPE: ${SWITCH_TYPE}`,
+        checkedAt: new Date().toISOString(),
+      };
+  }
+}
+

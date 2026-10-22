@@ -38,6 +38,10 @@ function getActionDetails(action) {
       return { label: 'Breaker On (Indefinite)', badgeClass: 'badge-indefinite' };
     case 'switch_on':
       return { label: 'Breaker On (Manual)', badgeClass: 'badge-manual' };
+    case 'switch_offline':
+      return { label: 'Switch Offline Alert', badgeClass: 'badge-offline' };
+    case 'switch_online':
+      return { label: 'Switch Back Online', badgeClass: 'badge-online' };
     case 'elevator_call':
     default:
       return { label: 'Elevator Call', badgeClass: 'badge-call' };
