@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'sw-push.js'],
+      includeAssets: ['icon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'badge-72x72.png', 'sw-push.js'],
       workbox: {
         importScripts: ['sw-push.js'],
       },

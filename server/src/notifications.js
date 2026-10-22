@@ -146,8 +146,8 @@ export async function sendTestPushToUser(userId) {
   const payload = JSON.stringify({
     title: '🔔 Elevator App Test Notification',
     body: 'Push notifications are successfully configured and working on this device!',
-    icon: '/icon.svg',
-    badge: '/icon.svg',
+    icon: '/pwa-192x192.png',
+    badge: '/badge-72x72.png',
     tag: 'test-notification',
     url: '/admin/switch',
     timestamp: Date.now(),

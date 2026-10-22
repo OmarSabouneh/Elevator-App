@@ -60,8 +60,8 @@ export async function runSwitchCheck(isManual = false) {
       await sendPushToAdmins({
         title: '✅ Elevator Switch Back Online',
         body: `The elevator breaker switch is back online and ready. (${result.deviceName || result.switchType})`,
-        icon: '/icon.svg',
-        badge: '/icon.svg',
+        icon: '/pwa-192x192.png',
+        badge: '/badge-72x72.png',
         tag: 'switch-status',
         url: '/admin/switch',
         timestamp: Date.now(),
@@ -89,8 +89,8 @@ export async function runSwitchCheck(isManual = false) {
       await sendPushToAdmins({
         title: '🚨 Elevator Switch is Offline!',
         body: `Elevator switch is offline or unreachable${errorMsg}. Please check breaker power or WiFi connection.`,
-        icon: '/icon.svg',
-        badge: '/icon.svg',
+        icon: '/pwa-192x192.png',
+        badge: '/badge-72x72.png',
         tag: 'switch-status',
         url: '/admin/switch',
         timestamp: Date.now(),

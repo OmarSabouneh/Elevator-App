@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'Elevator Switch Alert',
     body: 'The elevator switch is offline.',
-    icon: '/icon.svg',
-    badge: '/icon.svg',
+    icon: '/pwa-192x192.png',
+    badge: '/badge-72x72.png',
     tag: 'switch-status',
     url: '/admin/switch',
   };
@@ -19,8 +19,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body,
-    icon: data.icon || '/icon.svg',
-    badge: data.badge || '/icon.svg',
+    icon: data.icon || '/pwa-192x192.png',
+    badge: data.badge || '/badge-72x72.png',
     tag: data.tag || 'switch-status',
     renotify: true,
     requireInteraction: true,

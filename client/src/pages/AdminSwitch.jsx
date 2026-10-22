@@ -352,7 +352,7 @@ export default function AdminSwitch() {
               onClick={openInBrowser}
               style={{ width: '100%', margin: 0 }}
             >
-              🌐 Open in Chrome to Enable Push Alerts
+              📲 Set Up App Notifications (Open in Chrome)
             </button>
           ) : (
             <button
@@ -404,9 +404,16 @@ export default function AdminSwitch() {
               lineHeight: 1.45,
             }}
           >
-            <strong>📱 Running in Elevator App (APK)</strong>
-            <br />
-            To receive instant push notifications when the switch goes offline, tap <strong>"Open in Chrome"</strong> above to allow notifications once in Chrome. Once enabled, alerts arrive in your phone notification tray even when Chrome is closed.
+            <strong>🔔 To receive notifications from the Elevator App (not Chrome):</strong>
+            <ol style={{ paddingLeft: '1.25rem', margin: '0.35rem 0 0 0' }}>
+              <li>Tap <strong>"Set Up App Notifications"</strong> above to open in Chrome.</li>
+              <li>Tap Chrome's <strong>three dots (⋮)</strong> menu → <strong>"Install app"</strong> (or "Add to Home screen").</li>
+              <li>Open the newly installed <strong>Elevator Access</strong> app from your home screen.</li>
+              <li>Tap <strong>Enable Push Notifications</strong> inside the app.</li>
+            </ol>
+            <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>
+              This installs the app as an official Android WebAPK so notifications display the Elevator App icon and name.
+            </span>
           </div>
         )}
 
@@ -448,9 +455,11 @@ export default function AdminSwitch() {
 
               {isInsideApp && (
                 <div style={{ background: 'var(--bg)', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--accent)', marginBottom: '0.75rem' }}>
-                  <strong style={{ color: 'var(--accent)' }}>Recommended for Android Phone:</strong>
+                  <strong style={{ color: 'var(--accent)' }}>Get Notifications From the App (Not Chrome):</strong>
                   <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: '0.4rem 0 0.6rem 0' }}>
-                    Open this page in Google Chrome to subscribe with one tap. Once subscribed, notifications arrive automatically.
+                    1. Tap below to open the page in Chrome.<br />
+                    2. In Chrome, tap the <strong>three dots (⋮)</strong> and tap <strong>"Install app"</strong>.<br />
+                    3. Launch the new <strong>Elevator</strong> app and enable notifications!
                   </p>
                   <button
                     type="button"
@@ -461,7 +470,7 @@ export default function AdminSwitch() {
                     }}
                     style={{ width: '100%', margin: 0, padding: '0.65rem 1rem', fontSize: '0.85rem' }}
                   >
-                    🌐 Open in Chrome Now
+                    📲 Open in Chrome to Install App
                   </button>
                 </div>
               )}
