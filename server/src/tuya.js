@@ -138,6 +138,7 @@ export async function checkTuyaDeviceOnline() {
 
   const result = res.result || {};
   return {
+    deviceId,
     online: Boolean(result.online),
     name: result.name || 'WiFi Switch',
     ip: result.ip || null,

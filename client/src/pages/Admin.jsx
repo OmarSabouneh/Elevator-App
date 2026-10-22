@@ -337,7 +337,7 @@ export default function Admin() {
       <header className="header">
         <div>
           <h1>Admin</h1>
-          <small>Manage users & breaker</small>
+          <small>Manage users</small>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <AdminNav current="/admin" />
@@ -350,144 +350,24 @@ export default function Admin() {
       {error && <div className="msg-error" style={{ marginTop: '1rem' }} role="alert">{error}</div>}
       {success && <div className="msg-success" style={{ marginTop: '1rem' }} role="status">{success}</div>}
 
-      {/* Switch Availability & Push Notifications Card */}
-      <div className="switch-status-card">
-        <div className="switch-status-header">
-          <div className="switch-status-title">
-            <span>⚡ Breaker Switch Status</span>
-          </div>
-          <div>
-            {checkingAvailability ? (
-              <span className="status-badge checking">
-                <span className="dot-indicator checking" /> Checking…
-              </span>
-            ) : availability?.isOnline === true ? (
-              <span className="status-badge online">
-                <span className="dot-indicator online" /> Online
-              </span>
-            ) : availability?.isOnline === false ? (
-              <span className="status-badge offline">
-                <span className="dot-indicator offline" /> Offline
-              </span>
-            ) : (
-              <span className="status-badge checking">
-                <span className="dot-indicator checking" /> Monitoring
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="switch-meta-grid">
-          <div className="switch-meta-item">
-            <span className="switch-meta-label">Switch Device</span>
-            <span className="switch-meta-value">
-              {availability?.lastCheckResult?.deviceName ||
-                availability?.lastCheckResult?.switchType?.toUpperCase() ||
-                'Tuya Switch'}
-            </span>
-          </div>
-          <div className="switch-meta-item">
-            <span className="switch-meta-label">Check Cadence</span>
-            <span className="switch-meta-value">Every {availability?.intervalMinutes || 5} min</span>
-          </div>
-          <div className="switch-meta-item">
-            <span className="switch-meta-label">Last Checked</span>
-            <span className="switch-meta-value">
-              {availability?.lastCheckAt
-                ? new Date(availability.lastCheckAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                : 'Initial check soon'}
-            </span>
-          </div>
-          <div className="switch-meta-item">
-            <span className="switch-meta-label">Alert Subscribers</span>
-            <span className="switch-meta-value">
-              {availability?.subscriberCount !== undefined ? `${availability.subscriberCount} device(s)` : '0 device(s)'}
-            </span>
-          </div>
-        </div>
-
-        {availability?.isOnline === false && (
-          <div className="msg-error" style={{ margin: '0.65rem 0' }}>
-            ⚠️ <strong>Switch is currently OFFLINE!</strong> {availability?.lastCheckResult?.error || 'Unreachable via WiFi / Tuya Cloud.'}
-          </div>
-        )}
-
-        <div className="switch-actions-row">
-          <button
-            type="button"
-            className="btn-activate"
-            onClick={checkAvailabilityNow}
-            disabled={checkingAvailability}
-            style={{ width: 'auto', flex: 1 }}
-          >
-            {checkingAvailability ? 'Checking…' : '🔄 Check Switch Now'}
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={toggleIndefinite}
-            disabled={togglingSwitch}
-            style={{ width: 'auto', flex: 1.2 }}
-          >
-            {togglingSwitch
-              ? 'Updating…'
-              : switchState.indefinite
-              ? 'Turn breaker off'
-              : 'Keep ON indefinitely'}
-          </button>
-        </div>
-
-        {/* Push Notification Section */}
-        <div className="push-section">
-          <div className="push-section-header">
-            <div className="push-section-title">
-              <span>🔔 Push Notifications</span>
-            </div>
-            <span className="push-status-text">
-              {!pushStatus.supported
-                ? 'Not supported in this browser'
-                : pushStatus.subscribed
-                ? '✅ Active on this device'
-                : pushStatus.permission === 'denied'
-                ? '🚫 Blocked in browser'
-                : 'Not enabled'}
-            </span>
-          </div>
-
-          <div className="switch-actions-row">
-            {pushStatus.supported && (
-              <button
-                type="button"
-                className={pushStatus.subscribed ? 'btn-ghost-danger' : 'btn-activate'}
-                onClick={togglePushSubscription}
-                disabled={togglingPush || pushStatus.permission === 'denied'}
-                style={{ width: 'auto', flex: 1 }}
-              >
-                {togglingPush
-                  ? 'Saving…'
-                  : pushStatus.subscribed
-                  ? 'Disable Push'
-                  : 'Enable Push Notifications'}
-              </button>
-            )}
-            {pushStatus.subscribed && (
-              <button
-                type="button"
-                className="btn-activate"
-                onClick={sendTestPush}
-                disabled={testingPush}
-                style={{ width: 'auto', flex: 1 }}
-              >
-                {testingPush ? 'Sending…' : '📨 Send Test Push'}
-              </button>
-            )}
-          </div>
-
-          <div className="push-tip-box">
-            💡 <strong>Instant Alerts:</strong> If the switch goes offline, the server immediately pushes a notification to all registered admin devices.
-            Works on Android (Chrome or PWA installed to Home Screen) and Desktop without needing a new APK!
-          </div>
-        </div>
+      <div style={{ marginTop: '1rem' }}>
+        <Link
+          to="/admin/switch"
+          className="btn-activate"
+          style={{
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            padding: '0.85rem 1rem',
+            fontSize: '0.92rem',
+            margin: 0,
+          }}
+        >
+          <span>⚡ Breaker Control & Switch Status</span>
+          <span style={{ opacity: 0.8 }}>→</span>
+        </Link>
       </div>
 
       <div className="card">

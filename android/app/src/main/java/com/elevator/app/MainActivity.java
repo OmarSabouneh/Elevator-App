@@ -17,6 +17,9 @@ import android.net.NetworkInfo;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.graphics.Color;
+import android.content.Intent;
+import android.net.Uri;
+import android.webkit.JavascriptInterface;
 
 public class MainActivity extends Activity {
 
@@ -77,13 +80,39 @@ public class MainActivity extends Activity {
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
 
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void openInExternalBrowser(String url) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception ignored) {}
+            }
+        }, "AndroidBridge");
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith(SITE_URL) || url.startsWith("https://elevator-app-eight.vercel.app")) {
+                if (url != null && url.contains("open_external=true")) {
+                    try {
+                        String clean = url.replace("?open_external=true", "").replace("&open_external=true", "");
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(clean));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception ignored) {}
+                }
+                if (url != null && (url.startsWith(SITE_URL) || url.startsWith("https://elevator-app-eight.vercel.app"))) {
                     view.loadUrl(url);
                     return false;
                 }
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    return true;
+                } catch (Exception ignored) {}
                 return true;
             }
 

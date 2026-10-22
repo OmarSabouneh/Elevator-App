@@ -149,7 +149,7 @@ export async function sendTestPushToUser(userId) {
     icon: '/icon.svg',
     badge: '/icon.svg',
     tag: 'test-notification',
-    url: '/admin',
+    url: '/admin/switch',
     timestamp: Date.now(),
   });
 

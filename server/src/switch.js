@@ -249,6 +249,7 @@ export async function checkSwitchAvailability() {
         return {
           online: info.online,
           switchType: 'tuya',
+          deviceId: info.deviceId,
           deviceName: info.name,
           ip: info.ip,
           lastReported: info.updateTime ? new Date(info.updateTime * 1000).toISOString() : null,

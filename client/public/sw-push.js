@@ -6,7 +6,7 @@ self.addEventListener('push', (event) => {
     icon: '/icon.svg',
     badge: '/icon.svg',
     tag: 'switch-status',
-    url: '/admin',
+    url: '/admin/switch',
   };
 
   if (event.data) {
@@ -26,7 +26,7 @@ self.addEventListener('push', (event) => {
     requireInteraction: true,
     vibrate: [300, 100, 300, 100, 300],
     data: {
-      url: data.url || '/admin',
+      url: data.url || '/admin/switch',
       timestamp: Date.now(),
     },
   };
@@ -38,7 +38,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || '/admin';
+  const targetUrl = event.notification.data?.url || '/admin/switch';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {

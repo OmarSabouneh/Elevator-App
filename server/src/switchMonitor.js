@@ -63,7 +63,7 @@ export async function runSwitchCheck(isManual = false) {
         icon: '/icon.svg',
         badge: '/icon.svg',
         tag: 'switch-status',
-        url: '/admin',
+        url: '/admin/switch',
         timestamp: Date.now(),
       });
       await recordSwitchLog('switch_online');
@@ -92,7 +92,7 @@ export async function runSwitchCheck(isManual = false) {
         icon: '/icon.svg',
         badge: '/icon.svg',
         tag: 'switch-status',
-        url: '/admin',
+        url: '/admin/switch',
         timestamp: Date.now(),
       });
 

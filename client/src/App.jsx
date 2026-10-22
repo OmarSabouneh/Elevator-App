@@ -4,6 +4,7 @@ import { api } from './api';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
+import AdminSwitch from './pages/AdminSwitch';
 import AdminLogs from './pages/AdminLogs';
 
 function useAuth() {
@@ -129,6 +130,14 @@ export default function App() {
         element={
           <ProtectedRoute user={auth.user} loading={auth.loading}>
             {auth.user?.role === 'admin' ? <Admin auth={auth} /> : <Navigate to="/" replace />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/switch"
+        element={
+          <ProtectedRoute user={auth.user} loading={auth.loading}>
+            {auth.user?.role === 'admin' ? <AdminSwitch auth={auth} /> : <Navigate to="/" replace />}
           </ProtectedRoute>
         }
       />
